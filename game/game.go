@@ -43,6 +43,12 @@ const (
 	StateGameOver
 	StateWaveIntro
 	StateCredits
+	StateRespawn
+)
+
+const (
+	StartingLives  = 3
+	RespawnFreeze  = 180 // 3 seconds at 60 TPS
 )
 
 // Game is the top-level state container.
@@ -72,6 +78,10 @@ type Game struct {
 
 	// Events (cleared each frame)
 	Events []Event
+
+	// Lives
+	Lives        int
+	RespawnTimer int // frames remaining in respawn freeze
 
 	// Screen shake
 	ShakeFrames int
@@ -113,6 +123,8 @@ func (g *Game) reset() {
 	}
 	g.Wave = NewWaveManager()
 	g.Score = ScoreTracker{}
+	g.Lives = StartingLives
+	g.RespawnTimer = 0
 	g.ShakeFrames = 0
 	g.Tick = 0
 	g.Sound.PlayMusic()
@@ -137,6 +149,8 @@ func (g *Game) Update() error {
 	case StateWaveIntro:
 		g.Events = g.Events[:0]
 		g.updateWaveIntro()
+	case StateRespawn:
+		g.updateRespawn()
 	case StateGameOver:
 		// Decay screen shake (post-mortem).
 		if g.ShakeFrames > 0 {
@@ -173,20 +187,34 @@ func (g *Game) updatePlaying() {
 		case EventEnemyHit:
 			spawnExplosion(g, e.X, e.Y, ColorUI, 5)
 		case EventPlayerDied:
-			g.ShakeFrames = 120 // 2 seconds at 60 TPS
+			g.ShakeFrames = 120
 			g.ShakeAmount = 12
-			spawnExplosion(g, e.X, e.Y, ColorPlayer, 40)
-			g.State = StateGameOver
+			spawnDeathExplosion(g, e.X, e.Y)
+			g.Lives--
+			g.Score.Combo = 0
+			g.Score.ComboTimer = 0
+			if g.Lives <= 0 {
+				g.State = StateGameOver
+			} else {
+				g.respawn()
+			}
 			return
 		case EventWallBounce:
 			g.ShakeFrames = 5
 			g.ShakeAmount = 3
 			spawnExplosion(g, e.X, e.Y, ColorBorder, 8)
 		case EventWallDeath:
-			g.ShakeFrames = 120 // 2 seconds at 60 TPS
+			g.ShakeFrames = 120
 			g.ShakeAmount = 12
-			spawnExplosion(g, e.X, e.Y, ColorPlayer, 40)
-			g.State = StateGameOver
+			spawnDeathExplosion(g, e.X, e.Y)
+			g.Lives--
+			g.Score.Combo = 0
+			g.Score.ComboTimer = 0
+			if g.Lives <= 0 {
+				g.State = StateGameOver
+			} else {
+				g.respawn()
+			}
 			return
 		case EventWaveComplete:
 			g.State = StateWaveIntro
@@ -217,6 +245,30 @@ func (g *Game) updateWaveIntro() {
 	if g.Wave.IntroTick > 120 { // 2 seconds at 60fps
 		g.State = StatePlaying
 		g.Wave.StartSpawning(g)
+	}
+}
+
+func (g *Game) respawn() {
+	g.Player = NewPlayer(ScreenWidth/2, ScreenHeight/2)
+	g.Turret.Heat = 0
+	g.Turret.Cooldown = 0
+	g.RespawnTimer = RespawnFreeze
+	g.State = StateRespawn
+}
+
+func (g *Game) updateRespawn() {
+	// Particles still animate, but enemies are frozen.
+	updateParticles(g)
+
+	// Decay screen shake.
+	if g.ShakeFrames > 0 {
+		g.ShakeFrames--
+	}
+
+	g.RespawnTimer--
+	if g.RespawnTimer <= 0 {
+		g.Player.InvulnFrames = InvulnDuration
+		g.State = StatePlaying
 	}
 }
 

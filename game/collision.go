@@ -6,7 +6,7 @@ const (
 )
 
 func checkCollisions(g *Game) {
-	if !g.Player.Alive {
+	if !g.Player.Alive || g.State == StateRespawn {
 		return
 	}
 
@@ -45,7 +45,10 @@ func checkCollisions(g *Game) {
 		}
 	}
 
-	// Enemy vs player — squared distance.
+	// Enemy vs player — squared distance (skip if invulnerable).
+	if g.Player.InvulnFrames > 0 {
+		return
+	}
 	for i := range g.Enemies {
 		e := &g.Enemies[i]
 		if !e.Alive {

@@ -26,7 +26,11 @@ func drawUI(screen *ebiten.Image, g *Game) {
 		ebitenutil.DebugPrintAt(screen, waveStr, ScreenWidth/2-30, ScreenHeight/2-40)
 	}
 
-	// Heat bar — bottom center.
+	// Lives — top right, below combo.
+	livesStr := fmt.Sprintf("LIVES: %d", g.Lives)
+	ebitenutil.DebugPrintAt(screen, livesStr, ScreenWidth-150, 50)
+
+	// Heat bar — below lives.
 	drawHeatBar(screen, g)
 
 	// Game over.
@@ -43,7 +47,7 @@ func drawHeatBar(screen *ebiten.Image, g *Game) {
 	barW := float32(150)
 	barH := float32(8)
 	barX := float32(ScreenWidth) - barW - 20
-	barY := float32(50)
+	barY := float32(70)
 
 	// Background.
 	vector.DrawFilledRect(screen, barX, barY, barW, barH, color.RGBA{0x1A, 0x1A, 0x2E, 0xFF}, false)

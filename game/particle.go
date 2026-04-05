@@ -34,6 +34,27 @@ func spawnExplosion(g *Game, x, y float64, col color.RGBA, count int) {
 	}
 }
 
+func spawnDeathExplosion(g *Game, x, y float64) {
+	for i := 0; i < 80; i++ {
+		angle := rand.Float64() * 2 * math.Pi
+		speed := 0.5 + rand.Float64()*6.0
+		life := 60 + rand.Intn(90) // 1–2.5 seconds — much longer than normal
+		col := ColorPlayer
+		// Mix in some white/orange particles for variety.
+		if rand.Float64() < 0.3 {
+			col = ColorUI
+		}
+		g.Particles = append(g.Particles, Particle{
+			X: x, Y: y,
+			VX: math.Cos(angle) * speed,
+			VY: math.Sin(angle) * speed,
+			Life: life, MaxLife: life,
+			Size:  3 + float32(rand.Float64()*4),
+			Color: col,
+		})
+	}
+}
+
 func spawnThrustParticles(g *Game, x, y, dirX, dirY float64, col color.RGBA) {
 	for i := 0; i < 5; i++ {
 		spread := (rand.Float64() - 0.5) * 0.5

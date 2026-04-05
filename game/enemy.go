@@ -72,8 +72,25 @@ func spawnEnemyThrustParticles(g *Game) {
 }
 
 func drawEnemies(screen *ebiten.Image, g *Game, ox, oy float64) {
+	// During respawn freeze, enemies blink — faster as timer approaches 0.
+	respawnBlink := false
+	if g.State == StateRespawn {
+		// Blink period shrinks from 30 frames down to 6 as timer runs out.
+		frac := float64(g.RespawnTimer) / float64(RespawnFreeze)
+		period := int(6 + 24*frac) // 30 at start → 6 near end
+		if period < 2 {
+			period = 2
+		}
+		respawnBlink = (g.RespawnTimer/period)%2 == 0
+	}
+
 	for i := range g.Enemies {
 		e := &g.Enemies[i]
+
+		if respawnBlink {
+			continue // hidden during this blink phase
+		}
+
 		cx := float32(e.X + ox)
 		cy := float32(e.Y + oy)
 

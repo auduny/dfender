@@ -14,10 +14,15 @@ const (
 	WallDeathSpeed   = 8.0 // speed above which wall collision kills
 )
 
+const (
+	InvulnDuration = 240 // 4 seconds at 60 TPS
+)
+
 type Player struct {
-	X, Y   float64
-	VX, VY float64
-	Alive  bool
+	X, Y         float64
+	VX, VY       float64
+	Alive        bool
+	InvulnFrames int // frames of invulnerability remaining
 }
 
 func NewPlayer(x, y float64) Player {
@@ -50,6 +55,11 @@ func (p *Player) Update() {
 	// Integrate position.
 	p.X += p.VX
 	p.Y += p.VY
+
+	// Tick down invulnerability.
+	if p.InvulnFrames > 0 {
+		p.InvulnFrames--
+	}
 }
 
 // CheckWalls handles wall collision, emitting events as needed.
@@ -91,7 +101,7 @@ func (p *Player) CheckWalls(g *Game) {
 	}
 
 	if collided {
-		if impactSpeed >= WallDeathSpeed {
+		if impactSpeed >= WallDeathSpeed && p.InvulnFrames <= 0 {
 			g.Events = append(g.Events, Event{Type: EventWallDeath, X: p.X, Y: p.Y})
 			p.Alive = false
 		} else {
@@ -124,6 +134,12 @@ func (p *Player) Draw(screen *ebiten.Image, ox, oy float64) {
 	if !p.Alive {
 		return
 	}
+
+	// Flicker when invulnerable (skip drawing every other 4-frame block).
+	if p.InvulnFrames > 0 && (p.InvulnFrames/4)%2 == 0 {
+		return
+	}
+
 	cx := float32(p.X + ox)
 	cy := float32(p.Y + oy)
 	r := float32(PlayerRadius)
