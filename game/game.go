@@ -267,10 +267,10 @@ func (g *Game) updatePlaying() {
 				}
 			}
 			spawnExplosion(g, e.X, e.Y, ColorBorder, 15)
-		case EventMissileWallHit:
-			spawnExplosion(g, e.X, e.Y, ColorHeatHot, 20)
-			g.ShakeFrames = 8
-			g.ShakeAmount = 4
+		case EventMissileExploded:
+			spawnMissileBlast(g, e.X, e.Y)
+			g.ShakeFrames = 12
+			g.ShakeAmount = 6
 		case EventShieldAbsorb:
 			spawnExplosion(g, e.X, e.Y, ColorBorder, 30)
 			g.ShakeFrames = 10

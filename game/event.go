@@ -14,8 +14,8 @@ const (
 	EventProjectileWallHit
 	EventFired
 	EventPowerUpPickedUp
-	EventMissileWallHit
 	EventMissileFired
+	EventMissileExploded
 	EventShieldAbsorb
 )
 

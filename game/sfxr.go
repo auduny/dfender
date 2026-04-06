@@ -344,3 +344,16 @@ func sfxMissileLaunch() []byte {
 	})
 }
 
+func sfxMissileExplode() []byte {
+	return GenerateSFX(SFXParams{
+		WaveType:    3, // Noise — big boom
+		AttackTime:  0.0,
+		SustainTime: 0.12,
+		DecayTime:   0.35,
+		BaseFreq:    80,
+		FreqSlide:   -50,
+		LPFCutoff:   0.4,
+		Volume:      0.45,
+	})
+}
+
