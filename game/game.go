@@ -329,7 +329,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	drawParticles(s.SceneImage, g, ox, oy)
 	drawProjectiles(s.SceneImage, g, ox, oy)
 	drawEnemies(s.SceneImage, g, ox, oy)
-	g.Player.Draw(s.SceneImage, ox, oy)
+	g.Player.Draw(s.SceneImage, ox, oy, g.Turret.Heat)
 	g.Turret.Draw(s.SceneImage, g, ox, oy)
 
 	// --- Post-processing ---

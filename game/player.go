@@ -130,7 +130,7 @@ func (p *Player) SpawnThrustParticles(g *Game) {
 	}
 }
 
-func (p *Player) Draw(screen *ebiten.Image, ox, oy float64) {
+func (p *Player) Draw(screen *ebiten.Image, ox, oy float64, heat float64) {
 	if !p.Alive {
 		return
 	}
@@ -144,11 +144,14 @@ func (p *Player) Draw(screen *ebiten.Image, ox, oy float64) {
 	cy := float32(p.Y + oy)
 	r := float32(PlayerRadius)
 
+	// Tint ship from gold toward red as heat rises.
+	shipColor := lerpColor(ColorPlayer, ColorHeatHot, float32(heat))
+
 	// Outer glow ring (dimmer, larger).
 	vector.StrokeCircle(screen, cx, cy, r+4, 6, ColorBorderDim, false)
 
-	drawPolygon(screen, cx, cy, r, 6, -math.Pi/2, 4, ColorPlayer)
+	drawPolygon(screen, cx, cy, r, 6, -math.Pi/2, 4, shipColor)
 
 	// Inner dot.
-	vector.DrawFilledCircle(screen, cx, cy, 5, ColorPlayer, false)
+	vector.DrawFilledCircle(screen, cx, cy, 5, shipColor, false)
 }
