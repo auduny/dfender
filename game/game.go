@@ -113,6 +113,7 @@ func New(musicData, fontData []byte) *Game {
 		Sound:      NewSoundManager(musicData),
 		HighScores: LoadHighScores(),
 	}
+	g.Sound.PlayMusic()
 	return g
 }
 
@@ -134,7 +135,6 @@ func (g *Game) reset() {
 	g.RespawnTimer = 0
 	g.ShakeFrames = 0
 	g.Tick = 0
-	g.Sound.PlayMusic()
 }
 
 func (g *Game) Update() error {
