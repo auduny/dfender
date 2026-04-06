@@ -31,8 +31,9 @@ type SoundManager struct {
 	sfxWallHit        []byte
 	sfxPickup         []byte
 	sfxShieldAbsorb   []byte
-	sfxMissileLaunch  []byte
-	sfxMissileExplode []byte
+	sfxMissileLaunch     []byte
+	sfxMissileExplode    []byte
+	sfxOverheatWarning   []byte
 
 	// Streaming thruster engine sound
 	engine       *EngineSound
@@ -58,7 +59,8 @@ func NewSoundManager(musicData []byte) *SoundManager {
 		sfxPickup:         sfxPickup(),
 		sfxShieldAbsorb:   sfxShieldAbsorb(),
 		sfxMissileLaunch:  sfxMissileLaunch(),
-		sfxMissileExplode: sfxMissileExplode(),
+		sfxMissileExplode:    sfxMissileExplode(),
+		sfxOverheatWarning:  sfxOverheatWarning(),
 		engine:            NewEngineSound(),
 		activePlayers:     make(map[*[]byte][]*audio.Player),
 	}
@@ -180,6 +182,8 @@ func (sm *SoundManager) HandleEvent(e Event) {
 		sm.play(&sm.sfxWaveComplete)
 	case EventOverheat:
 		sm.play(&sm.sfxOverheat)
+	case EventOverheatWarning:
+		sm.play(&sm.sfxOverheatWarning)
 	case EventProjectileWallHit:
 		sm.play(&sm.sfxWallHit)
 	case EventFired:

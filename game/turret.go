@@ -51,6 +51,8 @@ func (t *Turret) Update(g *Game) {
 		t.Heat = float64(t.Cooldown) / float64(CooldownTime)
 		if t.Cooldown == 0 {
 			t.Heat = 0
+		} else if t.Cooldown%20 == 0 {
+			g.Events = append(g.Events, Event{Type: EventOverheatWarning})
 		}
 		return
 	}

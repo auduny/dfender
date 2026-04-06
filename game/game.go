@@ -51,11 +51,13 @@ const (
 	StateCredits
 	StateHighScores
 	StateRespawn
+	StatePaused
 )
 
 const (
 	StartingLives  = 3
 	RespawnFreeze  = 180 // 3 seconds at 60 TPS
+	UnpauseFreeze  = 60  // 1 second at 60 TPS
 )
 
 // Game is the top-level state container.
@@ -113,6 +115,10 @@ type Game struct {
 
 	// High scores
 	HighScores HighScoreTable
+
+	// Pause
+	UnpauseTimer   int       // frames remaining in unpause freeze (0 = not unpausing)
+	PrePauseState  GameState // state to return to after unpause
 }
 
 func New(musicData, fontData []byte) *Game {
@@ -171,9 +177,23 @@ func (g *Game) Update() error {
 	case StateHighScores:
 		g.updateHighScores()
 	case StatePlaying:
+		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+			g.Sound.SetThruster(0)
+			g.PrePauseState = StatePlaying
+			g.State = StatePaused
+			break
+		}
 		g.Events = g.Events[:0]
 		g.updatePlaying()
+	case StatePaused:
+		g.updatePaused()
 	case StateWaveIntro:
+		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+			g.Sound.SetThruster(0)
+			g.PrePauseState = StateWaveIntro
+			g.State = StatePaused
+			break
+		}
 		g.Events = g.Events[:0]
 		g.updateWaveIntro()
 	case StateRespawn:
@@ -349,6 +369,21 @@ func (g *Game) updateRespawn() {
 	if g.RespawnTimer <= 0 {
 		g.Player.InvulnFrames = InvulnDuration
 		g.State = StatePlaying
+	}
+}
+
+func (g *Game) updatePaused() {
+	if g.UnpauseTimer > 0 {
+		// Counting down to resume — animate particles so the screen isn't fully frozen.
+		updateParticles(g)
+		g.UnpauseTimer--
+		if g.UnpauseTimer <= 0 {
+			g.State = g.PrePauseState
+		}
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		g.UnpauseTimer = UnpauseFreeze
 	}
 }
 

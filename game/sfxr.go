@@ -267,6 +267,19 @@ func sfxOverheat() []byte {
 	})
 }
 
+func sfxOverheatWarning() []byte {
+	return GenerateSFX(SFXParams{
+		WaveType:    0, // Square — harsh, alarm-like
+		AttackTime:  0.0,
+		SustainTime: 0.04,
+		DecayTime:   0.04,
+		BaseFreq:    800,
+		FreqSlide:   -200,
+		LPFCutoff:   0.5,
+		Volume:      0.15,
+	})
+}
+
 func sfxWaveComplete() []byte {
 	return GenerateSFX(SFXParams{
 		WaveType:    2, // Sine — cleaner fanfare

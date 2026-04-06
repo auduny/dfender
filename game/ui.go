@@ -36,6 +36,16 @@ func drawUI(screen *ebiten.Image, g *Game) {
 	// Power-up indicators — below heat bar.
 	drawPowerUpHUD(screen, g)
 
+	// Paused overlay.
+	if g.State == StatePaused {
+		if g.UnpauseTimer > 0 {
+			drawTextCentered(screen, "RESUMING", FontMenu, float64(ScreenHeight)/2-40, ColorBorder)
+		} else {
+			drawTextCentered(screen, "PAUSED", FontTitle, float64(ScreenHeight)/2-80, ColorBorder)
+			drawTextCentered(screen, "PRESS P TO RESUME", FontMenuSmall, float64(ScreenHeight)/2, ColorBorderDim)
+		}
+	}
+
 	// Game over.
 	if g.State == StateGameOver {
 		cy := float64(ScreenHeight)/2 - 80
@@ -91,8 +101,8 @@ func drawHeatBar(screen *ebiten.Image, g *Game) {
 	// Border.
 	vector.StrokeRect(screen, barX, barY, barW, barH, 1, ColorBorderDim, false)
 
-	// Label if overheated.
+	// Label if overheated — to the left of the bar so it doesn't overlap lives.
 	if g.Turret.Cooldown > 0 {
-		drawTextAt(screen, "OVERHEAT", FontHUD, float64(barX), float64(barY)-20, ColorHeatHot)
+		drawTextAt(screen, "OVERHEAT", FontHUD, float64(barX)-90, float64(barY)-2, ColorHeatHot)
 	}
 }
