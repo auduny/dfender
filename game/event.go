@@ -17,6 +17,7 @@ const (
 	EventMissileFired
 	EventMissileExploded
 	EventShieldAbsorb
+	EventEnemyWallDeath
 )
 
 // Event is a value type describing something that happened this frame.

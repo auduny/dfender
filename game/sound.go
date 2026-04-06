@@ -166,7 +166,7 @@ func (sm *SoundManager) play(buf *[]byte) {
 // HandleEvent plays the appropriate sound for a game event.
 func (sm *SoundManager) HandleEvent(e Event) {
 	switch e.Type {
-	case EventEnemyKilled:
+	case EventEnemyKilled, EventEnemyWallDeath:
 		sm.play(&sm.sfxExplosion)
 	case EventEnemyHit:
 		sm.play(&sm.sfxSmallExplosion)

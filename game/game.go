@@ -33,6 +33,11 @@ var (
 	ColorUI         = color.RGBA{0xF0, 0xE6, 0xD3, 0xFF}
 	ColorHeatCool   = color.RGBA{0xD4, 0xA8, 0x43, 0xFF}
 	ColorHeatHot    = color.RGBA{0xFF, 0x33, 0x33, 0xFF}
+
+	// Enemy inner colors (by type).
+	ColorEnemyNormal = color.RGBA{0x66, 0x66, 0x77, 0xFF} // muted gray (won't blow out under bloom)
+	ColorEnemyRed    = color.RGBA{0xFF, 0x22, 0x22, 0xFF} // saturated red
+	ColorEnemyGreen  = color.RGBA{0x22, 0xFF, 0x22, 0xFF} // saturated green
 )
 
 // GameState tracks what phase the game is in.
@@ -248,6 +253,10 @@ func (g *Game) updatePlaying() {
 				g.respawn()
 			}
 			return
+		case EventEnemyWallDeath:
+			spawnExplosion(g, e.X, e.Y, ColorEnemy, 15)
+			g.ShakeFrames = 4
+			g.ShakeAmount = 2
 		case EventWaveComplete:
 			g.State = StateWaveIntro
 			g.Wave.NextWave()

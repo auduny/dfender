@@ -59,16 +59,59 @@ func (w *WaveManager) spawnOne(g *Game) {
 	gate := gates[w.GateIndex%4]
 	w.GateIndex++
 
-	speed := EnemyBaseSpeed + float64(w.Number-1)*0.2
 	hp := w.Number
-	turnRate := EnemyTurnRateMin + rand.Float64()*(EnemyTurnRateMax-EnemyTurnRateMin)
+
+	// Pick enemy type based on wave number.
+	// Wave 1-2: all Normal. Wave 3+: mix in Reds. Wave 5+: mix in Greens.
+	eType := EnemyNormal
+	if w.Number >= 3 {
+		roll := rand.Float64()
+		if w.Number >= 5 && roll < 0.25 {
+			eType = EnemyGreen
+		} else if roll < 0.5 {
+			eType = EnemyRed
+		}
+	}
+
+	var speed, turnRate, accel, maxSpeed float64
+	var evadeSign float64
+
+	switch eType {
+	case EnemyNormal:
+		speed = EnemyNormalSpeed + float64(w.Number-1)*0.15
+		turnRate = EnemyNormalTurnRate
+	case EnemyRed:
+		speed = EnemyRedBaseSpeed
+		turnRate = EnemyRedTurnRate
+		accel = EnemyRedAccel
+		maxSpeed = EnemyRedMaxSpeed + float64(w.Number-1)*0.3
+	case EnemyGreen:
+		speed = EnemyGreenSpeed + float64(w.Number-1)*0.1
+		turnRate = EnemyGreenTurnRate
+		if rand.Intn(2) == 0 {
+			evadeSign = 1
+		} else {
+			evadeSign = -1
+		}
+	}
+
+	teleportTimer := 0
+	if eType == EnemyGreen {
+		teleportTimer = EnemyGreenTeleportMin + rand.Intn(EnemyGreenTeleportMax-EnemyGreenTeleportMin)
+	}
 
 	g.Enemies = append(g.Enemies, Enemy{
 		X: gate.X, Y: gate.Y,
 		VX: gate.DirX * speed, VY: gate.DirY * speed,
-		Speed:    speed,
-		TurnRate: turnRate,
-		HP: hp, MaxHP: hp,
-		Alive: true,
+		Speed:         speed,
+		TurnRate:      turnRate,
+		HP:            hp,
+		MaxHP:         hp,
+		Alive:         true,
+		Type:          eType,
+		Accel:         accel,
+		MaxSpeed:      maxSpeed,
+		EvadeSign:     evadeSign,
+		TeleportTimer: teleportTimer,
 	})
 }

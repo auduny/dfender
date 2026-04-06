@@ -90,6 +90,11 @@ func (g *Game) drawMenuScreen(screen *ebiten.Image) {
 	// Bottom-right
 	vector.StrokeLine(s.SceneImage, float32(ScreenWidth)-borderInset-accent, float32(ScreenHeight)-borderInset, float32(ScreenWidth)-borderInset, float32(ScreenHeight)-borderInset-accent, 2, ColorBorder, false)
 
+	// Draw showcase enemies into scene (before bloom).
+	if g.State == StateMenu {
+		drawMenuEnemies(s.SceneImage, g.Tick)
+	}
+
 	// Bloom the scene.
 	s.ApplyBloom(screen)
 
@@ -124,6 +129,43 @@ func (g *Game) drawMenuScreen(screen *ebiten.Image) {
 
 	// Nav hint.
 	drawTextCentered(screen, "W/S or ARROWS to navigate  —  ENTER to select", FontMenuSmall, float64(ScreenHeight)-120, ColorBorderDim)
+}
+
+type menuEnemy struct {
+	label    string
+	innerCol color.RGBA
+	cx       float32
+	labelW   float64 // cached text width
+}
+
+var menuEnemies []menuEnemy
+
+func initMenuEnemies() {
+	menuEnemies = []menuEnemy{
+		{"JOE", ColorEnemyNormal, float32(ScreenWidth)/2 - 200, 0},
+		{"ALPHA", ColorEnemyRed, float32(ScreenWidth) / 2, 0},
+		{"BRAIN", ColorEnemyGreen, float32(ScreenWidth)/2 + 200, 0},
+	}
+	for i := range menuEnemies {
+		menuEnemies[i].labelW, _ = text.Measure(menuEnemies[i].label, FontMenuSmall, 0)
+	}
+}
+
+// drawMenuEnemies draws one of each enemy type on the menu screen as decoration.
+func drawMenuEnemies(screen *ebiten.Image, tick uint64) {
+	if menuEnemies == nil {
+		initMenuEnemies()
+	}
+
+	cy := float32(ScreenHeight) - 220
+	r := float32(EnemyRadius) * 1.3
+	angle := float64(tick) * 0.02
+
+	for _, item := range menuEnemies {
+		drawEnemyShape(screen, item.cx, cy, r, angle, ColorEnemy, item.innerCol)
+		drawTextAt(screen, item.label, FontMenuSmall,
+			float64(item.cx)-item.labelW/2, float64(cy+r+16), item.innerCol)
+	}
 }
 
 func (g *Game) drawCredits(screen *ebiten.Image) {
