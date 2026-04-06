@@ -8,17 +8,20 @@ import (
 )
 
 const (
-	EnemyRadius   = 22.0
-	EnemyBaseSpeed = 1.5
+	EnemyRadius        = 22.0
+	EnemyBaseSpeed     = 1.5
+	EnemyTurnRateMin   = 0.03 // radians per frame (slow turner)
+	EnemyTurnRateMax   = 0.10 // radians per frame (sharp turner)
 )
 
 type Enemy struct {
-	X, Y   float64
-	VX, VY float64
-	Speed  float64
-	HP     int
-	MaxHP  int
-	Alive  bool
+	X, Y     float64
+	VX, VY   float64
+	Speed    float64
+	TurnRate float64 // max radians per frame toward player
+	HP       int
+	MaxHP    int
+	Alive    bool
 	FlashFrames int
 }
 
@@ -28,13 +31,30 @@ func updateEnemies(g *Game) {
 		if !e.Alive {
 			continue
 		}
-		// Home toward player.
+		// Steer toward player, limited by turn rate.
 		dx := g.Player.X - e.X
 		dy := g.Player.Y - e.Y
 		dist := math.Sqrt(dx*dx + dy*dy)
 		if dist > 1 {
-			e.VX = dx / dist * e.Speed
-			e.VY = dy / dist * e.Speed
+			desiredAngle := math.Atan2(dy, dx)
+			currentAngle := math.Atan2(e.VY, e.VX)
+			diff := desiredAngle - currentAngle
+			// Normalize to [-pi, pi].
+			for diff > math.Pi {
+				diff -= 2 * math.Pi
+			}
+			for diff < -math.Pi {
+				diff += 2 * math.Pi
+			}
+			// Clamp turn.
+			if diff > e.TurnRate {
+				diff = e.TurnRate
+			} else if diff < -e.TurnRate {
+				diff = -e.TurnRate
+			}
+			newAngle := currentAngle + diff
+			e.VX = math.Cos(newAngle) * e.Speed
+			e.VY = math.Sin(newAngle) * e.Speed
 		}
 		e.X += e.VX
 		e.Y += e.VY

@@ -1,5 +1,7 @@
 package game
 
+import "math/rand"
+
 const (
 	SpawnInterval = 20 // frames between each enemy spawn within a wave
 )
@@ -52,11 +54,13 @@ func (w *WaveManager) spawnOne(g *Game) {
 
 	speed := EnemyBaseSpeed + float64(w.Number-1)*0.2
 	hp := w.Number
+	turnRate := EnemyTurnRateMin + rand.Float64()*(EnemyTurnRateMax-EnemyTurnRateMin)
 
 	g.Enemies = append(g.Enemies, Enemy{
 		X: gate.X, Y: gate.Y,
 		VX: gate.DirX * speed, VY: gate.DirY * speed,
-		Speed: speed,
+		Speed:    speed,
+		TurnRate: turnRate,
 		HP: hp, MaxHP: hp,
 		Alive: true,
 	})
