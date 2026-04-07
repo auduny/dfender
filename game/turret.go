@@ -87,7 +87,11 @@ func (t *Turret) Update(g *Game) {
 	if ebiten.IsKeyPressed(ebiten.KeySpace) && t.FireTimer == 0 && t.Cooldown == 0 {
 		t.FireTimer = rate
 		t.Heat += HeatPerShot
-		if t.Heat >= 1.0 {
+		if g.PlayerPowerUps.SupercoolTimer > 0 {
+			if t.Heat > SupercoolHeatCap {
+				t.Heat = SupercoolHeatCap
+			}
+		} else if t.Heat >= 1.0 {
 			t.Heat = 1.0
 			t.Cooldown = CooldownTime
 			g.Events = append(g.Events, Event{Type: EventOverheat, X: g.Player.X, Y: g.Player.Y})

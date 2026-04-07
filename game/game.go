@@ -34,6 +34,7 @@ var (
 	ColorHeatCool   = color.RGBA{0xD4, 0xA8, 0x43, 0xFF}
 	ColorHeatHot    = color.RGBA{0xFF, 0x33, 0x33, 0xFF}
 	ColorShield     = color.RGBA{0x33, 0xDD, 0x55, 0xFF} // green for shield powerup
+	ColorSupercool  = color.RGBA{0x44, 0xBB, 0xFF, 0xFF} // blue for supercooling powerup
 
 	// Enemy inner colors (by type).
 	ColorEnemyNormal = color.RGBA{0x66, 0x66, 0x77, 0xFF} // muted gray (won't blow out under bloom)
@@ -165,9 +166,12 @@ func (g *Game) Update() error {
 		g.Sound.ToggleMusic()
 	}
 
-	// Tick guns timer (shared across playing states).
+	// Tick powerup timers (shared across playing states).
 	if g.PlayerPowerUps.GunsTimer > 0 {
 		g.PlayerPowerUps.GunsTimer--
+	}
+	if g.PlayerPowerUps.SupercoolTimer > 0 {
+		g.PlayerPowerUps.SupercoolTimer--
 	}
 
 	switch g.State {
@@ -337,6 +341,8 @@ func (g *Game) applyPowerUp(e Event) {
 		if g.PlayerPowerUps.MissileCount < MissileMaxCount {
 			g.PlayerPowerUps.MissileCount++
 		}
+	case PowerUpSupercool:
+		g.PlayerPowerUps.SupercoolTimer = SupercoolBuffDuration
 	}
 	spawnExplosion(g, e.X, e.Y, ColorBorder, 22)
 }

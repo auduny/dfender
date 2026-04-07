@@ -12,9 +12,11 @@ import (
 type PowerUpType int
 
 const (
-	PowerUpShield  PowerUpType = iota
+	PowerUpShield    PowerUpType = iota
 	PowerUpGuns
 	PowerUpMissile
+	PowerUpSupercool
+	PowerUpCount // must be last — used for random selection
 )
 
 const (
@@ -25,14 +27,17 @@ const (
 	PowerUpRotSpeed   = 0.03 // radians/frame
 	PowerUpBobSpeed   = 0.05 // bob animation speed
 	PowerUpBobAmount  = 3.0  // bob amplitude in pixels
-	GunsBuffDuration  = 1200 // 20s at 60fps
+	GunsBuffDuration      = 1200 // 20s at 60fps
+	SupercoolBuffDuration = 900  // 15s at 60fps
+	SupercoolHeatCap      = 0.95 // heat cannot exceed this while active
 )
 
 // PlayerPowerUps tracks the player's active power-up state.
 type PlayerPowerUps struct {
-	Shield       bool
-	GunsTimer    int // frames remaining (0 = inactive)
-	MissileCount int
+	Shield        bool
+	GunsTimer     int // frames remaining (0 = inactive)
+	MissileCount  int
+	SupercoolTimer int // frames remaining (0 = inactive)
 }
 
 type PowerUp struct {
@@ -97,6 +102,9 @@ func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float64) {
 		case PowerUpMissile:
 			col = ColorHeatHot // red
 			sides = 4          // diamond
+		case PowerUpSupercool:
+			col = ColorSupercool // blue
+			sides = 7            // heptagon
 		}
 
 		// Outer glow.
@@ -137,7 +145,7 @@ func spawnPowerUpDrop(g *Game, x, y float64, waveNumber int) {
 		return
 	}
 
-	puType := PowerUpType(rand.Intn(3))
+	puType := PowerUpType(rand.Intn(int(PowerUpCount)))
 
 	g.PowerUps = append(g.PowerUps, PowerUp{
 		X: x, Y: y,

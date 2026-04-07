@@ -181,11 +181,15 @@ var menuPowerUps []menuPowerUp
 
 func initMenuPowerUps() {
 	menuPowerUps = []menuPowerUp{
-		{"SHIELD", ColorShield, 6, float32(ScreenWidth)/2 - 200, 0},
-		{"GUNS", ColorPlayer, 5, float32(ScreenWidth) / 2, 0},
-		{"MISSILE", ColorHeatHot, 4, float32(ScreenWidth)/2 + 200, 0},
+		{"SHIELD", ColorShield, 6, 0, 0},
+		{"GUNS", ColorPlayer, 5, 0, 0},
+		{"MISSILE", ColorHeatHot, 4, 0, 0},
+		{"COOL", ColorSupercool, 7, 0, 0},
 	}
+	spacing := float32(200)
+	startX := float32(ScreenWidth)/2 - spacing*float32(len(menuPowerUps)-1)/2
 	for i := range menuPowerUps {
+		menuPowerUps[i].cx = startX + float32(i)*spacing
 		menuPowerUps[i].labelW, _ = text.Measure(menuPowerUps[i].label, FontMenuSmall, 0)
 	}
 }

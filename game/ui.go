@@ -79,6 +79,12 @@ func drawPowerUpHUD(screen *ebiten.Image, g *Game) {
 		baseY += 20
 	}
 
+	if g.PlayerPowerUps.SupercoolTimer > 0 {
+		secs := g.PlayerPowerUps.SupercoolTimer / 60
+		drawTextAt(screen, fmt.Sprintf("COOL %ds", secs), FontHUD, baseX, baseY, ColorSupercool)
+		baseY += 20
+	}
+
 	if g.PlayerPowerUps.MissileCount > 0 {
 		drawTextAt(screen, fmt.Sprintf("MSL x%d [E]", g.PlayerPowerUps.MissileCount), FontHUD, baseX, baseY, ColorHeatHot)
 	}
@@ -95,7 +101,11 @@ func drawHeatBar(screen *ebiten.Image, g *Game) {
 
 	// Fill.
 	heat := float32(g.Turret.Heat)
-	fillColor := lerpColor(ColorHeatCool, ColorHeatHot, heat)
+	coolColor := ColorHeatCool
+	if g.PlayerPowerUps.SupercoolTimer > 0 {
+		coolColor = ColorSupercool
+	}
+	fillColor := lerpColor(coolColor, ColorHeatHot, heat)
 	vector.DrawFilledRect(screen, barX, barY, barW*heat, barH, fillColor, AntiAlias)
 
 	// Border.
