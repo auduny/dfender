@@ -118,7 +118,7 @@ func (t *Turret) Update(g *Game) {
 				Alive: true,
 			})
 		}
-		g.Events = append(g.Events, Event{Type: EventFired, X: spawnX, Y: spawnY})
+		g.Events = append(g.Events, Event{Type: EventFired, X: spawnX, Y: spawnY, Value: t.Heat})
 	}
 }
 

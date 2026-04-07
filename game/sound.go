@@ -21,7 +21,7 @@ type SoundManager struct {
 	musicPlayer *audio.Player
 
 	// Pre-generated SFX buffers
-	sfxLaser          []byte
+	sfxLaserPitches   [20][]byte // pitch variants from cool (0) to hot (19)
 	sfxExplosion      []byte
 	sfxSmallExplosion []byte
 	sfxBounce         []byte
@@ -48,7 +48,7 @@ func NewSoundManager(musicData []byte) *SoundManager {
 
 	sm := &SoundManager{
 		ctx:               ctx,
-		sfxLaser:          sfxLaser(),
+		sfxLaserPitches:   sfxLaserPitches(),
 		sfxExplosion:      sfxExplosion(),
 		sfxSmallExplosion: sfxSmallExplosion(),
 		sfxBounce:         sfxBounce(),
@@ -187,7 +187,13 @@ func (sm *SoundManager) HandleEvent(e Event) {
 	case EventProjectileWallHit:
 		sm.play(&sm.sfxWallHit)
 	case EventFired:
-		sm.play(&sm.sfxLaser)
+		idx := int(e.Value * 19)
+		if idx < 0 {
+			idx = 0
+		} else if idx > 19 {
+			idx = 19
+		}
+		sm.play(&sm.sfxLaserPitches[idx])
 	case EventPowerUpPickedUp:
 		sm.play(&sm.sfxPickup)
 	case EventShieldAbsorb:

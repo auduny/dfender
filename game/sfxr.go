@@ -202,17 +202,24 @@ func GenerateSFX(p SFXParams) []byte {
 
 // Preset sound effects
 
-func sfxLaser() []byte {
-	return GenerateSFX(SFXParams{
-		WaveType:    2, // Pure sine — clean "pew" with no harmonics
-		AttackTime:  0.0,
-		SustainTime: 0.005,
-		DecayTime:   0.04,
-		BaseFreq:    900,
-		FreqSlide:   -4000,
-		FreqLimit:   150,
-		Volume:      0.12,
-	})
+// sfxLaserPitches generates 20 laser sound variants with pitch rising from
+// 900 Hz (cool) to 1500 Hz (hot), giving an audible heat warning.
+func sfxLaserPitches() [20][]byte {
+	var bufs [20][]byte
+	for i := range bufs {
+		t := float64(i) / 19.0
+		bufs[i] = GenerateSFX(SFXParams{
+			WaveType:    2,
+			AttackTime:  0.0,
+			SustainTime: 0.005,
+			DecayTime:   0.04,
+			BaseFreq:    900 + t*600,
+			FreqSlide:   -4000,
+			FreqLimit:   150,
+			Volume:      0.12,
+		})
+	}
+	return bufs
 }
 
 func sfxExplosion() []byte {
