@@ -224,27 +224,26 @@ func sfxLaserPitches() [20][]byte {
 
 func sfxExplosion() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    3, // Noise
+		WaveType:    2, // Sine — low thump
 		AttackTime:  0.0,
-		SustainTime: 0.05,
-		DecayTime:   0.18,
-		BaseFreq:    120,
-		FreqSlide:   -80,
-		LPFCutoff:   0.3,
-		Volume:      0.35,
+		SustainTime: 0.03,
+		DecayTime:   0.15,
+		BaseFreq:    200,
+		FreqSlide:   -600,
+		FreqLimit:   40,
+		Volume:      0.25,
 	})
 }
 
 func sfxSmallExplosion() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    3, // Noise
+		WaveType:    2, // Sine — short bip
 		AttackTime:  0.0,
-		SustainTime: 0.005,
-		DecayTime:   0.03,
-		BaseFreq:    180,
-		FreqSlide:   -100,
-		LPFCutoff:   0.25,
-		Volume:      0.08,
+		SustainTime: 0.03,
+		DecayTime:   0.05,
+		BaseFreq:    900,
+		FreqSlide:   0,
+		Volume:      0.3,
 	})
 }
 
@@ -263,26 +262,25 @@ func sfxBounce() []byte {
 
 func sfxOverheat() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    3, // Noise
+		WaveType:    2, // Sine — descending warning tone
 		AttackTime:  0.01,
-		SustainTime: 0.15,
-		DecayTime:   0.25,
-		BaseFreq:    300,
-		FreqSlide:   -150,
-		LPFCutoff:   0.3,
-		Volume:      0.3,
+		SustainTime: 0.12,
+		DecayTime:   0.2,
+		BaseFreq:    500,
+		FreqSlide:   -300,
+		FreqLimit:   100,
+		Volume:      0.2,
 	})
 }
 
 func sfxOverheatWarning() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    0, // Square — harsh, alarm-like
+		WaveType:    2, // Sine — clean warning tone
 		AttackTime:  0.0,
 		SustainTime: 0.04,
 		DecayTime:   0.04,
 		BaseFreq:    800,
 		FreqSlide:   -200,
-		LPFCutoff:   0.5,
 		Volume:      0.15,
 	})
 }
@@ -308,21 +306,20 @@ func sfxPlayerDeath() []byte {
 		DecayTime:   0.6,
 		BaseFreq:    150,
 		FreqSlide:   -60,
-		LPFCutoff:   0.25,
-		Volume:      0.4,
+		LPFCutoff:   0.15,
+		Volume:      0.3,
 	})
 }
 
 func sfxWallHit() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    3, // Noise
+		WaveType:    2, // Sine — soft tick
 		AttackTime:  0.0,
-		SustainTime: 0.002,
-		DecayTime:   0.012,
-		BaseFreq:    200,
-		FreqSlide:   -300,
-		LPFCutoff:   0.2,
-		Volume:      0.06,
+		SustainTime: 0.02,
+		DecayTime:   0.04,
+		BaseFreq:    600,
+		FreqSlide:   0,
+		Volume:      0.15,
 	})
 }
 
@@ -340,40 +337,38 @@ func sfxPickup() []byte {
 
 func sfxShieldAbsorb() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    0, // Square — metallic ping
+		WaveType:    2, // Sine — clean metallic ping
 		AttackTime:  0.0,
 		SustainTime: 0.03,
 		DecayTime:   0.2,
 		BaseFreq:    800,
 		FreqSlide:   -400,
-		LPFCutoff:   0.5,
-		Volume:      0.3,
+		Volume:      0.2,
 	})
 }
 
 func sfxMissileLaunch() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    3, // Noise — whoosh
+		WaveType:    2, // Sine — rising whoosh
 		AttackTime:  0.01,
-		SustainTime: 0.08,
-		DecayTime:   0.15,
-		BaseFreq:    400,
-		FreqSlide:   600,
-		LPFCutoff:   0.35,
-		Volume:      0.25,
+		SustainTime: 0.06,
+		DecayTime:   0.12,
+		BaseFreq:    150,
+		FreqSlide:   800,
+		Volume:      0.18,
 	})
 }
 
 func sfxMissileExplode() []byte {
 	return GenerateSFX(SFXParams{
-		WaveType:    3, // Noise — big boom
+		WaveType:    2, // Sine — deep boom
 		AttackTime:  0.0,
-		SustainTime: 0.12,
-		DecayTime:   0.35,
-		BaseFreq:    80,
-		FreqSlide:   -50,
-		LPFCutoff:   0.4,
-		Volume:      0.45,
+		SustainTime: 0.08,
+		DecayTime:   0.3,
+		BaseFreq:    150,
+		FreqSlide:   -400,
+		FreqLimit:   25,
+		Volume:      0.3,
 	})
 }
 

@@ -196,6 +196,24 @@ func (g *Game) Update() error {
 		}
 		g.Events = g.Events[:0]
 		g.updateWaveIntro()
+		// Drain events so sounds still play during wave intro.
+		for _, e := range g.Events {
+			if !e.Silent {
+				g.Sound.HandleEvent(e)
+			}
+			switch e.Type {
+			case EventProjectileWallHit:
+				spawnExplosion(g, e.X, e.Y, ColorProjectile, 12)
+			case EventWallBounce:
+				g.ShakeFrames = 5
+				g.ShakeAmount = 3
+				spawnExplosion(g, e.X, e.Y, ColorBorder, 8)
+			case EventOverheat:
+				spawnExplosion(g, e.X, e.Y, ColorHeatHot, 10)
+			case EventPowerUpPickedUp:
+				g.applyPowerUp(e)
+			}
+		}
 	case StateRespawn:
 		g.Sound.SetThruster(0)
 		g.updateRespawn()
@@ -286,18 +304,7 @@ func (g *Game) updatePlaying() {
 		case EventProjectileWallHit:
 			spawnExplosion(g, e.X, e.Y, ColorProjectile, 12)
 		case EventPowerUpPickedUp:
-			puType := PowerUpType(int(e.Value))
-			switch puType {
-			case PowerUpShield:
-				g.PlayerPowerUps.Shield = true
-			case PowerUpGuns:
-				g.PlayerPowerUps.GunsTimer = GunsBuffDuration
-			case PowerUpMissile:
-				if g.PlayerPowerUps.MissileCount < MissileMaxCount {
-					g.PlayerPowerUps.MissileCount++
-				}
-			}
-			spawnExplosion(g, e.X, e.Y, ColorBorder, 15)
+			g.applyPowerUp(e)
 		case EventMissileExploded:
 			spawnMissileBlast(g, e.X, e.Y)
 			g.ShakeFrames = 12
@@ -316,6 +323,21 @@ func (g *Game) updatePlaying() {
 	if g.ShakeFrames > 0 {
 		g.ShakeFrames--
 	}
+}
+
+func (g *Game) applyPowerUp(e Event) {
+	puType := PowerUpType(int(e.Value))
+	switch puType {
+	case PowerUpShield:
+		g.PlayerPowerUps.Shield = true
+	case PowerUpGuns:
+		g.PlayerPowerUps.GunsTimer = GunsBuffDuration
+	case PowerUpMissile:
+		if g.PlayerPowerUps.MissileCount < MissileMaxCount {
+			g.PlayerPowerUps.MissileCount++
+		}
+	}
+	spawnExplosion(g, e.X, e.Y, ColorBorder, 15)
 }
 
 func (g *Game) updateWaveIntro() {
