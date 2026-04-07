@@ -43,8 +43,8 @@ const (
 	EnemyGreenTurnRate     = 0.06
 	EnemyGreenEvadeAngle   = 15.0 * math.Pi / 180.0 // 15 degrees offset
 	EnemyGreenSwitchRate   = 60                       // frames between direction switches
-	EnemyGreenTeleportMin  = 120                      // min frames between teleports (2s)
-	EnemyGreenTeleportMax  = 180                      // max frames between teleports (3s)
+	EnemyGreenTeleportMin  = 45                       // min frames between teleports (~0.75s)
+	EnemyGreenTeleportMax  = 90                       // max frames between teleports (1.5s)
 	EnemyGreenTeleportDist = 120.0                    // pixels to teleport sideways
 )
 
