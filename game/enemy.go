@@ -170,13 +170,13 @@ func teleportBrain(g *Game, e *Enemy) {
 	newY = math.Max(ArenaTop()+margin, math.Min(newY, ArenaBottom()-margin))
 
 	// Particles at old position (vanish).
-	spawnExplosion(g, e.X, e.Y, ColorEnemyGreen, 8)
+	spawnExplosion(g, e.X, e.Y, ColorEnemyGreen, 12)
 
 	e.X = newX
 	e.Y = newY
 
 	// Particles at new position (appear).
-	spawnExplosion(g, e.X, e.Y, ColorEnemyGreen, 8)
+	spawnExplosion(g, e.X, e.Y, ColorEnemyGreen, 12)
 }
 
 // enemyHitsWall returns true if the enemy is outside the arena bounds,

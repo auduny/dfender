@@ -204,13 +204,13 @@ func (g *Game) Update() error {
 			}
 			switch e.Type {
 			case EventProjectileWallHit:
-				spawnExplosion(g, e.X, e.Y, ColorProjectile, 12)
+				spawnExplosion(g, e.X, e.Y, ColorProjectile, 18)
 			case EventWallBounce:
 				g.ShakeFrames = 5
 				g.ShakeAmount = 3
-				spawnExplosion(g, e.X, e.Y, ColorBorder, 8)
+				spawnExplosion(g, e.X, e.Y, ColorBorder, 12)
 			case EventOverheat:
-				spawnExplosion(g, e.X, e.Y, ColorHeatHot, 10)
+				spawnExplosion(g, e.X, e.Y, ColorHeatHot, 15)
 			case EventPowerUpPickedUp:
 				g.applyPowerUp(e)
 			}
@@ -258,10 +258,10 @@ func (g *Game) updatePlaying() {
 		switch e.Type {
 		case EventEnemyKilled:
 			g.Score.AddKill(int(e.Value))
-			spawnExplosion(g, e.X, e.Y, ColorEnemy, 20)
+			spawnExplosion(g, e.X, e.Y, ColorEnemy, 30)
 			spawnPowerUpDrop(g, e.X, e.Y, g.Wave.Number)
 		case EventEnemyHit:
-			spawnExplosion(g, e.X, e.Y, ColorUI, 5)
+			spawnExplosion(g, e.X, e.Y, ColorUI, 8)
 		case EventPlayerDied:
 			g.ShakeFrames = 120
 			g.ShakeAmount = 12
@@ -278,7 +278,7 @@ func (g *Game) updatePlaying() {
 		case EventWallBounce:
 			g.ShakeFrames = 5
 			g.ShakeAmount = 3
-			spawnExplosion(g, e.X, e.Y, ColorBorder, 8)
+			spawnExplosion(g, e.X, e.Y, ColorBorder, 12)
 		case EventWallDeath:
 			g.ShakeFrames = 120
 			g.ShakeAmount = 12
@@ -293,7 +293,7 @@ func (g *Game) updatePlaying() {
 			}
 			return
 		case EventEnemyWallDeath:
-			spawnExplosion(g, e.X, e.Y, ColorEnemy, 15)
+			spawnExplosion(g, e.X, e.Y, ColorEnemy, 22)
 			g.ShakeFrames = 4
 			g.ShakeAmount = 2
 		case EventWaveComplete:
@@ -301,9 +301,9 @@ func (g *Game) updatePlaying() {
 			g.Wave.NextWave()
 			return
 		case EventOverheat:
-			spawnExplosion(g, e.X, e.Y, ColorHeatHot, 10)
+			spawnExplosion(g, e.X, e.Y, ColorHeatHot, 15)
 		case EventProjectileWallHit:
-			spawnExplosion(g, e.X, e.Y, ColorProjectile, 12)
+			spawnExplosion(g, e.X, e.Y, ColorProjectile, 18)
 		case EventPowerUpPickedUp:
 			g.applyPowerUp(e)
 		case EventMissileExploded:
@@ -311,12 +311,12 @@ func (g *Game) updatePlaying() {
 			g.ShakeFrames = 12
 			g.ShakeAmount = 6
 		case EventShieldAbsorb:
-			spawnExplosion(g, e.X, e.Y, ColorBorder, 30)
+			spawnExplosion(g, e.X, e.Y, ColorBorder, 45)
 			g.ShakeFrames = 10
 			g.ShakeAmount = 5
 		case EventMissileFired:
 			// Particle burst at launch point.
-			spawnExplosion(g, e.X, e.Y, ColorHeatHot, 8)
+			spawnExplosion(g, e.X, e.Y, ColorHeatHot, 12)
 		}
 	}
 
@@ -338,7 +338,7 @@ func (g *Game) applyPowerUp(e Event) {
 			g.PlayerPowerUps.MissileCount++
 		}
 	}
-	spawnExplosion(g, e.X, e.Y, ColorBorder, 15)
+	spawnExplosion(g, e.X, e.Y, ColorBorder, 22)
 }
 
 func (g *Game) updateWaveIntro() {

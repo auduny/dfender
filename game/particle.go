@@ -22,13 +22,13 @@ func spawnExplosion(g *Game, x, y float64, col color.RGBA, count int) {
 	for i := 0; i < count; i++ {
 		angle := rand.Float64() * 2 * math.Pi
 		speed := 1.0 + rand.Float64()*4.0
-		life := 20 + rand.Intn(30)
+		life := 40 + rand.Intn(50)
 		g.Particles = append(g.Particles, Particle{
 			X: x, Y: y,
 			VX: math.Cos(angle) * speed,
 			VY: math.Sin(angle) * speed,
 			Life: life, MaxLife: life,
-			Size:  2 + float32(rand.Float64()*3),
+			Size:  3 + float32(rand.Float64()*4),
 			Color: col,
 		})
 	}
@@ -91,17 +91,31 @@ func updateParticles(g *Game) {
 	g.Particles = g.Particles[:n]
 }
 
+func clampByte(v float32) uint8 {
+	if v > 255 {
+		return 255
+	}
+	return uint8(v)
+}
+
 func drawParticles(screen *ebiten.Image, g *Game, ox, oy float64) {
 	for i := range g.Particles {
 		p := &g.Particles[i]
-		alpha := float32(p.Life) / float32(p.MaxLife)
+		t := float32(p.Life) / float32(p.MaxLife)
+		// Brightness boost: particles start at 1.5x brightness and fade to 0.
+		var brightness float32
+		if t > 0.7 {
+			brightness = 1.5 // hot start
+		} else {
+			brightness = 1.5 * (t / 0.7) // fade out over remaining life
+		}
 		col := p.Color
-		col.R = uint8(float32(col.R) * alpha)
-		col.G = uint8(float32(col.G) * alpha)
-		col.B = uint8(float32(col.B) * alpha)
-		col.A = uint8(float32(col.A) * alpha)
+		col.R = clampByte(float32(col.R) * brightness)
+		col.G = clampByte(float32(col.G) * brightness)
+		col.B = clampByte(float32(col.B) * brightness)
+		col.A = uint8(float32(col.A) * t)
 		cx := float32(p.X + ox)
 		cy := float32(p.Y + oy)
-		vector.DrawFilledCircle(screen, cx, cy, p.Size*alpha, col, AntiAlias)
+		vector.DrawFilledCircle(screen, cx, cy, p.Size*t, col, AntiAlias)
 	}
 }
