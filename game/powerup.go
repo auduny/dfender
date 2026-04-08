@@ -29,7 +29,7 @@ const (
 	PowerUpBobSpeed   = 0.05 // bob animation speed
 	PowerUpBobAmount  = 3.0  // bob amplitude in pixels
 	GunsBuffDuration      = 1200 // 20s at 60fps
-	SupercoolBuffDuration = 900  // 15s at 60fps
+	SupercoolBuffDuration = 3600 // 60s at 60fps
 	SupercoolHeatCap      = 0.95 // heat cannot exceed this while active
 )
 
