@@ -5,44 +5,68 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-func drawUI(screen *ebiten.Image, g *Game) {
-	// Score — top right.
-	scoreStr := fmt.Sprintf("%d", g.Score.Score)
-	drawTextAt(screen, scoreStr, FontHUD, float64(ScreenWidth-150), 10, ColorUI)
+// Status bar layout.
+const (
+	statusTextY  = 22.0 // Y for FontHUD text in status bar
+	statusScoreY = 16.0 // Y for FontMenu score (taller font)
 
-	// Combo.
+	// Fixed X positions for power-up indicators (don't shift when others appear/disappear).
+	puSlotShield = 200.0
+	puSlotGuns   = 300.0
+	puSlotCool   = 420.0
+	puSlotMSL    = 540.0
+	puSlotMine   = 640.0
+)
+
+func drawUI(screen *ebiten.Image, g *Game) {
+	sbH := float32(ArenaMargin + StatusBarHeight - 5) // status bar background height
+
+	// Status bar background.
+	vector.DrawFilledRect(screen, 0, 0, float32(ScreenWidth), sbH,
+		color.RGBA{0x05, 0x07, 0x14, 0xCC}, AntiAlias)
+
+	// Wave indicator — left.
+	waveStr := fmt.Sprintf("WAVE %d", g.Wave.Number)
+	drawTextAt(screen, waveStr, FontHUD, 30, statusTextY, ColorBorder)
+
+	// Score — center.
+	scoreStr := fmt.Sprintf("%d", g.Score.Score)
+	drawTextCentered(screen, scoreStr, FontMenu, statusScoreY, ColorUI)
+
+	// Combo — right of score.
 	if g.Score.Combo > 1 {
 		comboStr := fmt.Sprintf("x%d", g.Score.Combo)
-		drawTextAt(screen, comboStr, FontHUD, float64(ScreenWidth-150), 34, ColorBorder)
+		sw, _ := text.Measure(scoreStr, FontMenu, 0)
+		comboX := float64(ScreenWidth)/2 + sw/2 + 12
+		drawTextAt(screen, comboStr, FontHUD, comboX, statusTextY+2, ColorBorder)
 	}
 
-	// Wave — center screen announcement.
-	if g.State == StateWaveIntro {
-		waveStr := fmt.Sprintf("WAVE %d", g.Wave.Number)
-		drawTextCentered(screen, waveStr, FontMenu, float64(ScreenHeight)/2-40, ColorBorder)
-	}
-
-	// Lives — top right, below combo.
-	livesStr := fmt.Sprintf("LIVES: %d", g.Lives)
-	drawTextAt(screen, livesStr, FontHUD, float64(ScreenWidth-150), 56, ColorUI)
-
-	// Heat bar — below lives.
+	// Heat bar — right-center.
 	drawHeatBar(screen, g)
 
-	// Power-up indicators — below heat bar.
+	// Lives — far right.
+	livesStr := fmt.Sprintf("LIVES: %d", g.Lives)
+	drawTextAt(screen, livesStr, FontHUD, float64(ScreenWidth-130), statusTextY, ColorUI)
+
+	// Power-up indicators — fixed positions.
 	drawPowerUpHUD(screen, g)
 
-	// Paused overlay.
+	// Wave intro announcement — center screen overlay.
+	if g.State == StateWaveIntro {
+		waveAnnounce := fmt.Sprintf("WAVE %d", g.Wave.Number)
+		drawTextCentered(screen, waveAnnounce, FontMenu, float64(ScreenHeight)/2-40, ColorBorder)
+	}
+
+	// Paused overlay with keymap.
 	if g.State == StatePaused {
 		if g.UnpauseTimer > 0 {
 			drawTextCentered(screen, "RESUMING", FontMenu, float64(ScreenHeight)/2-40, ColorBorder)
 		} else {
-			drawTextCentered(screen, "PAUSED", FontTitle, float64(ScreenHeight)/2-80, ColorBorder)
-			drawTextCentered(screen, "PRESS P TO RESUME", FontMenuSmall, float64(ScreenHeight)/2, ColorBorderDim)
+			drawPauseOverlay(screen)
 		}
 	}
 
@@ -60,46 +84,65 @@ func drawUI(screen *ebiten.Image, g *Game) {
 		drawTextCentered(screen, "PRESS ENTER TO CONTINUE", FontMenuSmall, cy, ColorBorderDim)
 	}
 
-	// FPS (keep debug font — it's a debug readout).
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %.0f", ebiten.ActualFPS()), 10, 10)
+}
+
+var keymapEntries = []struct{ key, action string }{
+	{"WASD", "THRUST"},
+	{"ARROWS", "AIM TURRET"},
+	{"SPACE", "FIRE"},
+	{"E", "LAUNCH MISSILE"},
+	{"Q", "PLACE MINE"},
+	{"M", "TOGGLE MUSIC"},
+}
+
+func drawPauseOverlay(screen *ebiten.Image) {
+	cy := float64(ScreenHeight)/2 - 160
+	drawTextCentered(screen, "PAUSED", FontTitle, cy, ColorBorder)
+	cy += 100
+
+	keyX := float64(ScreenWidth)/2 - 140
+	actX := float64(ScreenWidth)/2 + 20
+	for _, k := range keymapEntries {
+		drawTextAt(screen, k.key, FontHUD, keyX, cy, ColorBorder)
+		drawTextAt(screen, k.action, FontHUD, actX, cy, ColorUI)
+		cy += 28
+	}
+
+	cy += 20
+	drawTextCentered(screen, "PRESS P TO RESUME", FontMenuSmall, cy, ColorBorderDim)
 }
 
 func drawPowerUpHUD(screen *ebiten.Image, g *Game) {
-	baseX := float64(ScreenWidth - 170)
-	baseY := float64(95)
+	y := statusTextY
 
 	if g.PlayerPowerUps.Shield {
-		drawTextAt(screen, "SHIELD", FontHUD, baseX, baseY, ColorBorder)
-		baseY += 20
+		drawTextAt(screen, "SHIELD", FontHUD, puSlotShield, y, ColorBorder)
 	}
 
 	if g.PlayerPowerUps.GunsTimer > 0 {
 		secs := g.PlayerPowerUps.GunsTimer / 60
-		drawTextAt(screen, fmt.Sprintf("GUNS %ds", secs), FontHUD, baseX, baseY, ColorPlayer)
-		baseY += 20
+		drawTextAt(screen, fmt.Sprintf("GUNS %ds", secs), FontHUD, puSlotGuns, y, ColorPlayer)
 	}
 
 	if g.PlayerPowerUps.SupercoolTimer > 0 {
 		secs := g.PlayerPowerUps.SupercoolTimer / 60
-		drawTextAt(screen, fmt.Sprintf("COOL %ds", secs), FontHUD, baseX, baseY, ColorSupercool)
-		baseY += 20
+		drawTextAt(screen, fmt.Sprintf("COOL %ds", secs), FontHUD, puSlotCool, y, ColorSupercool)
 	}
 
 	if g.PlayerPowerUps.MissileCount > 0 {
-		drawTextAt(screen, fmt.Sprintf("MSL x%d [E]", g.PlayerPowerUps.MissileCount), FontHUD, baseX, baseY, ColorHeatHot)
-		baseY += 20
+		drawTextAt(screen, fmt.Sprintf("MSL x%d", g.PlayerPowerUps.MissileCount), FontHUD, puSlotMSL, y, ColorHeatHot)
 	}
 
 	if g.PlayerPowerUps.MineCount > 0 {
-		drawTextAt(screen, fmt.Sprintf("MINE x%d [Q]", g.PlayerPowerUps.MineCount), FontHUD, baseX, baseY, ColorMine)
+		drawTextAt(screen, fmt.Sprintf("MINE x%d", g.PlayerPowerUps.MineCount), FontHUD, puSlotMine, y, ColorMine)
 	}
 }
 
 func drawHeatBar(screen *ebiten.Image, g *Game) {
-	barW := float32(150)
-	barH := float32(8)
-	barX := float32(ScreenWidth) - barW - 20
-	barY := float32(78)
+	barW := float32(180)
+	barH := float32(10)
+	barX := float32(ScreenWidth) - 340
+	barY := float32(statusTextY + 5)
 
 	// Background.
 	vector.DrawFilledRect(screen, barX, barY, barW, barH, color.RGBA{0x1A, 0x1A, 0x2E, 0xFF}, AntiAlias)
@@ -116,8 +159,8 @@ func drawHeatBar(screen *ebiten.Image, g *Game) {
 	// Border.
 	vector.StrokeRect(screen, barX, barY, barW, barH, 1, ColorBorderDim, AntiAlias)
 
-	// Label if overheated — to the left of the bar so it doesn't overlap lives.
+	// Label if overheated.
 	if g.Turret.Cooldown > 0 {
-		drawTextAt(screen, "OVERHEAT", FontHUD, float64(barX)-90, float64(barY)-2, ColorHeatHot)
+		drawTextAt(screen, "OVERHEAT", FontHUD, float64(barX)-90, float64(barY)-3, ColorHeatHot)
 	}
 }

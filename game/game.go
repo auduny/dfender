@@ -17,6 +17,9 @@ const (
 	// Arena inset from screen edges.
 	ArenaMargin = 40
 
+	// Extra top margin for the status bar HUD.
+	StatusBarHeight = 30
+
 	// Gate dimensions.
 	GateWidth = 120
 )
@@ -501,7 +504,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 // Arena bounds (inside the margin).
 func ArenaLeft() float64   { return float64(ArenaMargin) }
 func ArenaRight() float64  { return float64(ScreenWidth - ArenaMargin) }
-func ArenaTop() float64    { return float64(ArenaMargin) }
+func ArenaTop() float64    { return float64(ArenaMargin + StatusBarHeight) }
 func ArenaBottom() float64 { return float64(ScreenHeight - ArenaMargin) }
 
 // Gate centers.
