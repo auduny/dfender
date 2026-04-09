@@ -464,9 +464,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		s.DrawGatePortal(s.SceneImage, gate, g.Tick, spawning)
 	}
 
-	// Arena border.
-	drawArena(s.SceneImage, g, ox, oy)
-
 	// Game objects.
 	drawParticles(s.SceneImage, g, ox, oy)
 	drawPowerUps(s.SceneImage, g, ox, oy)
@@ -492,6 +489,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Bloom post-process → screen.
 	s.ApplyBloom(screen)
+
+	// Arena border (post-bloom, stays crisp).
+	drawArena(screen, g, ox, oy)
 
 	// UI drawn on top (not bloomed).
 	drawUI(screen, g)

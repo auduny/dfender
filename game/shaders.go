@@ -41,9 +41,9 @@ type Shaders struct {
 
 	// Offscreen images for bloom pipeline.
 	SceneImage  *ebiten.Image // full-res scene
-	BrightImage *ebiten.Image // bright extraction
-	BlurTemp    *ebiten.Image // blur intermediate
-	BloomImage  *ebiten.Image // final bloom
+	BrightImage *ebiten.Image // full-res bright extraction
+	BlurTemp    *ebiten.Image // half-res blur intermediate
+	BloomImage  *ebiten.Image // half-res blur output
 
 	// Gate portal rendering.
 	GateImage  *ebiten.Image // render target
@@ -52,9 +52,11 @@ type Shaders struct {
 	// Temp image for heat distortion pass.
 	HeatTemp *ebiten.Image
 
-	// Reusable option structs to avoid per-frame allocations.
-	rectOpts  ebiten.DrawRectShaderOptions
-	imageOpts ebiten.DrawImageOptions
+	// Reusable option structs and uniform maps to avoid per-frame allocations.
+	rectOpts     ebiten.DrawRectShaderOptions
+	imageOpts    ebiten.DrawImageOptions
+	blurUniforms map[string]any
+	brightUniforms map[string]any
 }
 
 func NewShaders() *Shaders {
@@ -92,12 +94,16 @@ func NewShaders() *Shaders {
 
 	// Offscreen images.
 	s.SceneImage = ebiten.NewImage(ScreenWidth, ScreenHeight)
-	s.BrightImage = ebiten.NewImage(ScreenWidth, ScreenHeight)
-	s.BlurTemp = ebiten.NewImage(ScreenWidth, ScreenHeight)
-	s.BloomImage = ebiten.NewImage(ScreenWidth, ScreenHeight)
+	s.BrightImage = ebiten.NewImage(ScreenWidth, ScreenHeight)       // full-res bright extraction
+	s.BlurTemp = ebiten.NewImage(ScreenWidth/2, ScreenHeight/2)      // half-res blur intermediate
+	s.BloomImage = ebiten.NewImage(ScreenWidth/2, ScreenHeight/2)    // half-res blur output
 	s.GateImage = ebiten.NewImage(200, 200)
 	s.GateDummy = ebiten.NewImage(200, 200)
 	s.HeatTemp = ebiten.NewImage(ScreenWidth, ScreenHeight)
+
+	// Pre-allocate uniform maps.
+	s.blurUniforms = map[string]any{"Spread": float32(0)}
+	s.brightUniforms = map[string]any{"Threshold": float32(0)}
 
 	return s
 }
@@ -150,68 +156,54 @@ func (s *Shaders) DrawGatePortal(dst *ebiten.Image, gate Gate, tick uint64, spaw
 }
 
 // blurPass runs one horizontal+vertical blur at the given spread.
-// Reads from src, writes to BloomImage (via BlurTemp intermediate).
+// Operates at half-res. Reads from src, writes to BloomImage (via BlurTemp).
 func (s *Shaders) blurPass(src *ebiten.Image, spread float32) {
-	w, h := ScreenWidth, ScreenHeight
+	hw, hh := ScreenWidth/2, ScreenHeight/2
 
 	s.BlurTemp.Clear()
-	s.rectOpts.Uniforms = map[string]any{
-		"Spread": spread,
-	}
+	s.blurUniforms["Spread"] = spread
+	s.rectOpts.Uniforms = s.blurUniforms
 	s.rectOpts.Images[0] = src
-	s.BlurTemp.DrawRectShader(w, h, s.BlurH, &s.rectOpts)
+	s.BlurTemp.DrawRectShader(hw, hh, s.BlurH, &s.rectOpts)
 
 	s.BloomImage.Clear()
-	s.rectOpts.Uniforms = map[string]any{
-		"Spread": spread,
-	}
 	s.rectOpts.Images[0] = s.BlurTemp
-	s.BloomImage.DrawRectShader(w, h, s.BlurV, &s.rectOpts)
+	s.BloomImage.DrawRectShader(hw, hh, s.BlurV, &s.rectOpts)
 }
 
-// ApplyBloom uses cascaded blur passes for a smooth, wide glow.
-// Each pass blurs the previous result, doubling the effective radius
-// without the ghost artifacts of single-pass large offsets.
+// ApplyBloom: extract → downsample → blur → upsample → composite.
+// Blurring at half-res doubles the effective radius for free and
+// bilinear filtering during down/upsample smooths out sampling artifacts.
 func (s *Shaders) ApplyBloom(dst *ebiten.Image) {
 	w, h := ScreenWidth, ScreenHeight
 
-	// 1. Extract bright pixels.
+	// 1. Extract bright pixels at full-res.
 	s.BrightImage.Clear()
-	s.rectOpts = ebiten.DrawRectShaderOptions{}
-	s.rectOpts.Uniforms = map[string]any{
-		"Threshold": float32(0.08),
-	}
+	s.brightUniforms["Threshold"] = float32(0.1)
+	s.rectOpts.Uniforms = s.brightUniforms
 	s.rectOpts.Images[0] = s.SceneImage
 	s.BrightImage.DrawRectShader(w, h, s.BloomBright, &s.rectOpts)
 
-	// 2. Composite scene first.
+	// 2. Downsample bright extraction to half-res.
+	s.BloomImage.Clear()
+	s.imageOpts = ebiten.DrawImageOptions{}
+	s.imageOpts.GeoM.Scale(0.5, 0.5)
+	s.BloomImage.DrawImage(s.BrightImage, &s.imageOpts)
+
+	// 3. Composite full-res scene.
 	dst.DrawImage(s.SceneImage, nil)
 
-	// 3. Cascaded blur: blur the blur result each iteration.
-	// Pass 1: BrightImage → BloomImage (small blur, tight glow).
-	s.blurPass(s.BrightImage, 2.0)
-	// Copy result to BrightImage for next pass input.
-	s.BrightImage.Clear()
-	s.BrightImage.DrawImage(s.BloomImage, nil)
-	// Composite tight glow.
-	s.imageOpts = ebiten.DrawImageOptions{}
-	s.imageOpts.Blend = ebiten.BlendLighter
-	dst.DrawImage(s.BloomImage, &s.imageOpts)
+	// 4. Blur at half-res (five cascaded passes).
+	s.blurPass(s.BloomImage, 2.0)
+	s.blurPass(s.BloomImage, 3.0)
+	s.blurPass(s.BloomImage, 4.0)
+	s.blurPass(s.BloomImage, 5.0)
+	s.blurPass(s.BloomImage, 6.0)
 
-	// Pass 2: blur the already-blurred image (medium glow).
-	s.blurPass(s.BrightImage, 3.0)
-	s.BrightImage.Clear()
-	s.BrightImage.DrawImage(s.BloomImage, nil)
+	// 5. Upsample bloom back to full-res and composite additively.
 	s.imageOpts = ebiten.DrawImageOptions{}
+	s.imageOpts.GeoM.Scale(2, 2)
 	s.imageOpts.Blend = ebiten.BlendLighter
-	s.imageOpts.ColorScale.Scale(0.6, 0.6, 0.6, 0.6)
-	dst.DrawImage(s.BloomImage, &s.imageOpts)
-
-	// Pass 3: blur again (wide, soft outer glow).
-	s.blurPass(s.BrightImage, 4.0)
-	s.imageOpts = ebiten.DrawImageOptions{}
-	s.imageOpts.Blend = ebiten.BlendLighter
-	s.imageOpts.ColorScale.Scale(0.3, 0.3, 0.3, 0.3)
 	dst.DrawImage(s.BloomImage, &s.imageOpts)
 }
 

@@ -2,16 +2,15 @@
 
 package main
 
-// Brightness extraction — low threshold to catch all neon elements.
+// Brightness extraction with soft knee to avoid hard-edge aliasing.
 var Threshold float
 
 func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 	c := imageSrc0At(srcPos)
 	brightness := dot(c.rgb, vec3(0.2126, 0.7152, 0.0722))
-	if brightness < Threshold {
-		return vec4(0)
-	}
-	// Boost extracted brightness for fat glow.
-	factor := (brightness - Threshold) / (1.0 - Threshold)
+	// Soft knee: smooth transition over a range around the threshold
+	// instead of a hard cutoff that creates aliased edges.
+	knee := Threshold * 0.5
+	factor := smoothstep(Threshold-knee, Threshold+knee, brightness)
 	return c * factor * 1.5
 }

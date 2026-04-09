@@ -74,23 +74,6 @@ func (g *Game) drawMenuScreen(screen *ebiten.Image) {
 	s.SceneImage.Clear()
 	s.DrawStarfield(s.SceneImage, g.Tick)
 
-	// Draw a decorative border frame on the scene.
-	borderInset := float32(60)
-	bw := float32(ScreenWidth) - borderInset*2
-	bh := float32(ScreenHeight) - borderInset*2
-	vector.StrokeRect(s.SceneImage, borderInset, borderInset, bw, bh, 2, ColorBorder, AntiAlias)
-
-	// Corner accents — small diagonal lines at each corner.
-	accent := float32(20)
-	// Top-left
-	vector.StrokeLine(s.SceneImage, borderInset, borderInset+accent, borderInset+accent, borderInset, 2, ColorBorder, AntiAlias)
-	// Top-right
-	vector.StrokeLine(s.SceneImage, float32(ScreenWidth)-borderInset-accent, borderInset, float32(ScreenWidth)-borderInset, borderInset+accent, 2, ColorBorder, AntiAlias)
-	// Bottom-left
-	vector.StrokeLine(s.SceneImage, borderInset, float32(ScreenHeight)-borderInset-accent, borderInset+accent, float32(ScreenHeight)-borderInset, 2, ColorBorder, AntiAlias)
-	// Bottom-right
-	vector.StrokeLine(s.SceneImage, float32(ScreenWidth)-borderInset-accent, float32(ScreenHeight)-borderInset, float32(ScreenWidth)-borderInset, float32(ScreenHeight)-borderInset-accent, 2, ColorBorder, AntiAlias)
-
 	// Draw showcase enemies and powerups into scene (before bloom).
 	if g.State == StateMenu {
 		drawMenuEnemies(s.SceneImage, g.Tick)
@@ -99,6 +82,27 @@ func (g *Game) drawMenuScreen(screen *ebiten.Image) {
 
 	// Bloom the scene.
 	s.ApplyBloom(screen)
+
+	// Everything below is post-bloom (crisp, no blur artifacts).
+
+	// Decorative border frame.
+	borderInset := float32(60)
+	bw := float32(ScreenWidth) - borderInset*2
+	bh := float32(ScreenHeight) - borderInset*2
+	vector.StrokeRect(screen, borderInset, borderInset, bw, bh, 2, ColorBorder, AntiAlias)
+
+	// Corner accents.
+	accent := float32(20)
+	vector.StrokeLine(screen, borderInset, borderInset+accent, borderInset+accent, borderInset, 2, ColorBorder, AntiAlias)
+	vector.StrokeLine(screen, float32(ScreenWidth)-borderInset-accent, borderInset, float32(ScreenWidth)-borderInset, borderInset+accent, 2, ColorBorder, AntiAlias)
+	vector.StrokeLine(screen, borderInset, float32(ScreenHeight)-borderInset-accent, borderInset+accent, float32(ScreenHeight)-borderInset, 2, ColorBorder, AntiAlias)
+	vector.StrokeLine(screen, float32(ScreenWidth)-borderInset-accent, float32(ScreenHeight)-borderInset, float32(ScreenWidth)-borderInset, float32(ScreenHeight)-borderInset-accent, 2, ColorBorder, AntiAlias)
+
+	// Labels.
+	if g.State == StateMenu {
+		drawMenuEnemyLabels(screen)
+		drawMenuPowerUpLabels(screen, g.Tick)
+	}
 
 	// Title.
 	drawTextCentered(screen, "dFENDER", FontTitle, 180, ColorBorder)
@@ -152,20 +156,35 @@ func initMenuEnemies() {
 	}
 }
 
+const (
+	menuEnemyCY    = float32(ScreenHeight) - 300
+	menuEnemyR     = float32(EnemyRadius) * menuShowcaseScale
+	menuPowerUpCY  = float32(ScreenHeight) - 180
+	menuPowerUpR   = float32(PowerUpRadius) * menuShowcaseScale
+	menuShowcaseScale = 1.3
+)
+
 // drawMenuEnemies draws one of each enemy type on the menu screen as decoration.
 func drawMenuEnemies(screen *ebiten.Image, tick uint64) {
 	if menuEnemies == nil {
 		initMenuEnemies()
 	}
 
-	cy := float32(ScreenHeight) - 300
-	r := float32(EnemyRadius) * 1.3
 	angle := float64(tick) * 0.02
+	for _, item := range menuEnemies {
+		drawEnemyShape(screen, item.cx, menuEnemyCY, menuEnemyR, angle, ColorEnemy, item.innerCol)
+	}
+}
+
+// drawMenuEnemyLabels draws enemy labels (post-bloom so text stays crisp).
+func drawMenuEnemyLabels(screen *ebiten.Image) {
+	if menuEnemies == nil {
+		return
+	}
 
 	for _, item := range menuEnemies {
-		drawEnemyShape(screen, item.cx, cy, r, angle, ColorEnemy, item.innerCol)
 		drawTextAt(screen, item.label, FontMenuSmall,
-			float64(item.cx)-item.labelW/2, float64(cy+r+16), item.innerCol)
+			float64(item.cx)-item.labelW/2, float64(menuEnemyCY+menuEnemyR+16), item.innerCol)
 	}
 }
 
@@ -195,23 +214,35 @@ func initMenuPowerUps() {
 	}
 }
 
+// drawMenuPowerUps draws powerup shapes (for bloomed scene).
 func drawMenuPowerUps(screen *ebiten.Image, tick uint64) {
 	if menuPowerUps == nil {
 		initMenuPowerUps()
 	}
 
-	cy := float32(ScreenHeight) - 180
-	r := float32(PowerUpRadius) * 1.3
 	angle := float64(tick) * PowerUpRotSpeed
-	bob := math.Sin(float64(tick)*PowerUpBobSpeed) * PowerUpBobAmount
+	bob := float32(math.Sin(float64(tick)*PowerUpBobSpeed) * PowerUpBobAmount)
 
 	for _, item := range menuPowerUps {
-		py := cy + float32(bob)
-		vector.StrokeCircle(screen, item.cx, py, r+4, 2, item.col, AntiAlias)
-		drawPolygon(screen, item.cx, py, r, item.sides, angle, 3, item.col)
+		py := menuPowerUpCY + bob
+		vector.StrokeCircle(screen, item.cx, py, menuPowerUpR+4, 2, item.col, AntiAlias)
+		drawPolygon(screen, item.cx, py, menuPowerUpR, item.sides, angle, 3, item.col)
 		vector.DrawFilledCircle(screen, item.cx, py, 4, item.col, AntiAlias)
+	}
+}
+
+// drawMenuPowerUpLabels draws powerup labels (post-bloom, so text stays crisp).
+func drawMenuPowerUpLabels(screen *ebiten.Image, tick uint64) {
+	if menuPowerUps == nil {
+		return
+	}
+
+	bob := float32(math.Sin(float64(tick)*PowerUpBobSpeed) * PowerUpBobAmount)
+
+	for _, item := range menuPowerUps {
+		py := menuPowerUpCY + bob
 		drawTextAt(screen, item.label, FontMenuSmall,
-			float64(item.cx)-item.labelW/2, float64(py+r+16), item.col)
+			float64(item.cx)-item.labelW/2, float64(py+menuPowerUpR+16), item.col)
 	}
 }
 
