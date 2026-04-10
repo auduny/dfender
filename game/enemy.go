@@ -140,15 +140,7 @@ func updateEnemies(g *Game) {
 			e.FlashFrames--
 		}
 	}
-	// Compact.
-	n := 0
-	for i := range g.Enemies {
-		if g.Enemies[i].Alive {
-			g.Enemies[n] = g.Enemies[i]
-			n++
-		}
-	}
-	g.Enemies = g.Enemies[:n]
+	g.Enemies = compact(g.Enemies, func(e *Enemy) bool { return e.Alive })
 }
 
 // teleportBrain blinks a Brain enemy sideways (perpendicular to heading).

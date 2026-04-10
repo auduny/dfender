@@ -48,15 +48,7 @@ func updateMines(g *Game) {
 		m.Age++
 	}
 
-	// Compact.
-	n := 0
-	for i := range g.Mines {
-		if g.Mines[i].Alive {
-			g.Mines[n] = g.Mines[i]
-			n++
-		}
-	}
-	g.Mines = g.Mines[:n]
+	g.Mines = compact(g.Mines, func(m *Mine) bool { return m.Alive })
 }
 
 func checkMineCollisions(g *Game) {

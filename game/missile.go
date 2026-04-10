@@ -111,15 +111,7 @@ func updateMissiles(g *Game) {
 		}
 	}
 
-	// Compact.
-	n := 0
-	for i := range g.Missiles {
-		if g.Missiles[i].Alive {
-			g.Missiles[n] = g.Missiles[i]
-			n++
-		}
-	}
-	g.Missiles = g.Missiles[:n]
+	g.Missiles = compact(g.Missiles, func(m *Missile) bool { return m.Alive })
 }
 
 func checkMissileCollisions(g *Game) {

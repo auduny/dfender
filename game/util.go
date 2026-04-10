@@ -24,6 +24,18 @@ func drawPolygon(screen *ebiten.Image, cx, cy, radius float32, sides int, startA
 	}
 }
 
+// compact removes elements from slice in-place where keep returns false.
+func compact[T any](slice []T, keep func(*T) bool) []T {
+	n := 0
+	for i := range slice {
+		if keep(&slice[i]) {
+			slice[n] = slice[i]
+			n++
+		}
+	}
+	return slice[:n]
+}
+
 func lerpColor(a, b color.RGBA, t float32) color.RGBA {
 	if t < 0 {
 		t = 0

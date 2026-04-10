@@ -80,15 +80,7 @@ func updateParticles(g *Game) {
 		p.VY *= 0.97
 		p.Life--
 	}
-	// Compact.
-	n := 0
-	for i := range g.Particles {
-		if g.Particles[i].Life > 0 {
-			g.Particles[n] = g.Particles[i]
-			n++
-		}
-	}
-	g.Particles = g.Particles[:n]
+	g.Particles = compact(g.Particles, func(p *Particle) bool { return p.Life > 0 })
 }
 
 func clampByte(v float32) uint8 {

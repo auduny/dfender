@@ -40,15 +40,7 @@ func updateProjectiles(g *Game) {
 			p.Alive = false
 		}
 	}
-	// Compact — remove dead projectiles.
-	n := 0
-	for i := range g.Projectiles {
-		if g.Projectiles[i].Alive {
-			g.Projectiles[n] = g.Projectiles[i]
-			n++
-		}
-	}
-	g.Projectiles = g.Projectiles[:n]
+	g.Projectiles = compact(g.Projectiles, func(p *Projectile) bool { return p.Alive })
 }
 
 func drawProjectiles(screen *ebiten.Image, g *Game, ox, oy float64) {

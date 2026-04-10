@@ -58,15 +58,7 @@ func updatePowerUps(g *Game) {
 		pu.Life--
 		pu.Rotation += PowerUpRotSpeed
 	}
-	// Compact.
-	n := 0
-	for i := range g.PowerUps {
-		if g.PowerUps[i].Life > 0 {
-			g.PowerUps[n] = g.PowerUps[i]
-			n++
-		}
-	}
-	g.PowerUps = g.PowerUps[:n]
+	g.PowerUps = compact(g.PowerUps, func(p *PowerUp) bool { return p.Life > 0 })
 }
 
 func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float64) {
