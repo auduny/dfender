@@ -26,7 +26,7 @@ const (
 // Event is a value type describing something that happened this frame.
 type Event struct {
 	Type   EventType
-	X, Y   float64
-	Value  float64
+	X, Y   float32
+	Value  float32
 	Silent bool // suppress sound (e.g. missile blast covers individual kills)
 }

@@ -1,15 +1,13 @@
 package game
 
 import (
-	"math"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 const (
-	TurretRotSpeed   = math.Pi // radians per second → 180 deg/s
+	TurretRotSpeed   = pi32 // radians per second → 180 deg/s
 	TurretLength     = 38.0
 	FireRate         = 6  // frames between shots (10/sec at 60fps)
 	GunsFireRate     = 3  // frames between shots with guns powerup
@@ -21,14 +19,14 @@ const (
 )
 
 type Turret struct {
-	Angle     float64 // radians, 0 = up
-	Heat      float64 // 0..1
+	Angle     float32 // radians, 0 = up
+	Heat      float32 // 0..1
 	Cooldown  int     // frames remaining in overheat lockout
 	FireTimer int     // frames until next shot allowed
 }
 
 func NewTurret() Turret {
-	return Turret{Angle: -math.Pi / 2} // pointing up
+	return Turret{Angle: -pi32 / 2} // pointing up
 }
 
 func (t *Turret) Update(g *Game) {
@@ -48,7 +46,7 @@ func (t *Turret) Update(g *Game) {
 	// Cooldown.
 	if t.Cooldown > 0 {
 		t.Cooldown--
-		t.Heat = float64(t.Cooldown) / float64(CooldownTime)
+		t.Heat = float32(t.Cooldown) / float32(CooldownTime)
 		if t.Cooldown == 0 {
 			t.Heat = 0
 		} else if t.Cooldown%20 == 0 {
@@ -104,17 +102,17 @@ func (t *Turret) Update(g *Game) {
 			return
 		}
 		// Spawn projectile(s).
-		dx := math.Cos(t.Angle)
-		dy := math.Sin(t.Angle)
+		dx := cos32(t.Angle)
+		dy := sin32(t.Angle)
 		spawnX := g.Player.X + dx*TurretLength
 		spawnY := g.Player.Y + dy*TurretLength
 
 		if gunsActive {
 			// Double barrel: two projectiles with spread.
-			for _, offset := range []float64{-GunsSpread, GunsSpread} {
+			for _, offset := range []float32{-GunsSpread, GunsSpread} {
 				a := t.Angle + offset
-				pdx := math.Cos(a)
-				pdy := math.Sin(a)
+				pdx := cos32(a)
+				pdy := sin32(a)
 				g.Projectiles = append(g.Projectiles, Projectile{
 					X: spawnX, Y: spawnY,
 					VX: pdx * ProjectileSpeed, VY: pdy * ProjectileSpeed,
@@ -132,21 +130,21 @@ func (t *Turret) Update(g *Game) {
 	}
 }
 
-func (t *Turret) Draw(screen *ebiten.Image, g *Game, ox, oy float64) {
+func (t *Turret) Draw(screen *ebiten.Image, g *Game, ox, oy float32) {
 	if !g.Player.Alive {
 		return
 	}
-	cx := float32(g.Player.X + ox)
-	cy := float32(g.Player.Y + oy)
-	dx := float32(math.Cos(t.Angle))
-	dy := float32(math.Sin(t.Angle))
+	cx := g.Player.X + ox
+	cy := g.Player.Y + oy
+	dx := cos32(t.Angle)
+	dy := sin32(t.Angle)
 
 	// Barrel.
 	endX := cx + dx*TurretLength
 	endY := cy + dy*TurretLength
 
 	// Color shifts with heat.
-	barrelColor := lerpColor(ColorPlayer, ColorHeatHot, float32(t.Heat))
+	barrelColor := lerpColor(ColorPlayer, ColorHeatHot, t.Heat)
 	vector.StrokeLine(screen, cx, cy, endX, endY, 5, barrelColor, AntiAlias)
 
 	// Muzzle dot.

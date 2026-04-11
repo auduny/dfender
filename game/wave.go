@@ -33,7 +33,7 @@ func (w *WaveManager) StartSpawning(g *Game) {
 	w.SpawnQueue = count
 	// Distribute spawns evenly across the spawn window.
 	w.SpawnTimer = 0
-	w.SpawnInterval = int(SpawnWindowSeconds * 60 / float64(count))
+	w.SpawnInterval = int(SpawnWindowSeconds * 60 / float32(count))
 }
 
 func (w *WaveManager) Update(g *Game) {
@@ -49,7 +49,7 @@ func (w *WaveManager) Update(g *Game) {
 
 	// Check wave complete: no enemies left and queue empty.
 	if w.SpawnQueue == 0 && len(g.Enemies) == 0 && g.State == StatePlaying {
-		g.Events = append(g.Events, Event{Type: EventWaveComplete, Value: float64(w.Number)})
+		g.Events = append(g.Events, Event{Type: EventWaveComplete, Value: float32(w.Number)})
 		g.Score.AddWaveBonus(w.Number)
 	}
 }
@@ -73,20 +73,20 @@ func (w *WaveManager) spawnOne(g *Game) {
 		}
 	}
 
-	var speed, turnRate, accel, maxSpeed float64
-	var evadeSign float64
+	var speed, turnRate, accel, maxSpeed float32
+	var evadeSign float32
 
 	switch eType {
 	case EnemyNormal:
-		speed = EnemyNormalSpeed + float64(w.Number-1)*0.15
+		speed = EnemyNormalSpeed + float32(w.Number-1)*0.15
 		turnRate = EnemyNormalTurnRate
 	case EnemyRed:
 		speed = EnemyRedBaseSpeed
 		turnRate = EnemyRedTurnRate
 		accel = EnemyRedAccel
-		maxSpeed = EnemyRedMaxSpeed + float64(w.Number-1)*0.3
+		maxSpeed = EnemyRedMaxSpeed + float32(w.Number-1)*0.3
 	case EnemyGreen:
-		speed = EnemyGreenSpeed + float64(w.Number-1)*0.1
+		speed = EnemyGreenSpeed + float32(w.Number-1)*0.1
 		turnRate = EnemyGreenTurnRate
 		if rand.Intn(2) == 0 {
 			evadeSign = 1

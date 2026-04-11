@@ -151,7 +151,7 @@ func drawHeatBar(screen *ebiten.Image, g *Game) {
 	vector.DrawFilledRect(screen, barX, barY, barW, barH, color.RGBA{0x1A, 0x1A, 0x2E, 0xFF}, AntiAlias)
 
 	// Fill.
-	heat := float32(g.Turret.Heat)
+	heat := g.Turret.Heat
 	coolColor := ColorHeatCool
 	if g.PlayerPowerUps.SupercoolTimer > 0 {
 		coolColor = ColorSupercool

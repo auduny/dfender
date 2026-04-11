@@ -3,7 +3,6 @@ package game
 import (
 	_ "embed"
 	"log"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -135,7 +134,7 @@ func (s *Shaders) DrawGatePortal(dst *ebiten.Image, gate Gate, tick uint64, spaw
 
 	intensity := float32(0.4)
 	if spawning {
-		intensity = 0.8 + 0.2*float32(math.Sin(float64(tick)*0.1))
+		intensity = 0.8 + 0.2*sin32(float32(tick)*0.1)
 	}
 
 	opts := &ebiten.DrawRectShaderOptions{}
@@ -150,7 +149,7 @@ func (s *Shaders) DrawGatePortal(dst *ebiten.Image, gate Gate, tick uint64, spaw
 	// Draw gate image centered on gate position.
 	drawOpts := &ebiten.DrawImageOptions{}
 	drawOpts.GeoM.Translate(-float64(size)/2, -float64(size)/2)
-	drawOpts.GeoM.Translate(gate.X, gate.Y)
+	drawOpts.GeoM.Translate(float64(gate.X), float64(gate.Y))
 	drawOpts.Blend = ebiten.BlendSourceOver
 	dst.DrawImage(s.GateImage, drawOpts)
 }
@@ -208,7 +207,7 @@ func (s *Shaders) ApplyBloom(dst *ebiten.Image) {
 }
 
 // ApplyHeatDistortion applies screen-space heat distortion.
-func (s *Shaders) ApplyHeatDistortion(dst, src *ebiten.Image, heat float64, centerX, centerY float64, tick uint64) {
+func (s *Shaders) ApplyHeatDistortion(dst, src *ebiten.Image, heat float32, centerX, centerY float32, tick uint64) {
 	if heat < 0.3 {
 		// Below threshold, just copy.
 		dst.DrawImage(src, nil)
@@ -216,8 +215,8 @@ func (s *Shaders) ApplyHeatDistortion(dst, src *ebiten.Image, heat float64, cent
 	}
 	opts := &ebiten.DrawRectShaderOptions{}
 	opts.Uniforms = map[string]any{
-		"HeatAmount": float32(heat),
-		"HeatCenter": []float32{float32(centerX), float32(centerY)},
+		"HeatAmount": heat,
+		"HeatCenter": []float32{centerX, centerY},
 		"Resolution": []float32{float32(ScreenWidth), float32(ScreenHeight)},
 		"Time":       float32(tick) / 60.0,
 	}

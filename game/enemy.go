@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -10,7 +9,7 @@ import (
 )
 
 // drawEnemyShape draws a single enemy: shield ring, inner body, outer triangle.
-func drawEnemyShape(screen *ebiten.Image, cx, cy, r float32, angle float64, shieldCol, innerCol color.RGBA) {
+func drawEnemyShape(screen *ebiten.Image, cx, cy, r float32, angle float32, shieldCol, innerCol color.RGBA) {
 	vector.StrokeCircle(screen, cx, cy, r+3, 4, shieldCol, AntiAlias)
 	vector.DrawFilledCircle(screen, cx, cy, r*0.55, innerCol, AntiAlias)
 	drawPolygon(screen, cx, cy, r, 3, angle, 2, shieldCol)
@@ -41,27 +40,27 @@ const (
 	// Green (Brain): moderate speed, sharp turns, evasive offset, teleport.
 	EnemyGreenSpeed        = 1.8
 	EnemyGreenTurnRate     = 0.06
-	EnemyGreenEvadeAngle   = 15.0 * math.Pi / 180.0 // 15 degrees offset
-	EnemyGreenSwitchRate   = 60                       // frames between direction switches
-	EnemyGreenTeleportMin  = 45                       // min frames between teleports (~0.75s)
-	EnemyGreenTeleportMax  = 90                       // max frames between teleports (1.5s)
-	EnemyGreenTeleportDist = 120.0                    // pixels to teleport sideways
+	EnemyGreenEvadeAngle   = 15.0 * pi32 / 180.0 // 15 degrees offset
+	EnemyGreenSwitchRate   = 60                    // frames between direction switches
+	EnemyGreenTeleportMin  = 45                    // min frames between teleports (~0.75s)
+	EnemyGreenTeleportMax  = 90                    // max frames between teleports (1.5s)
+	EnemyGreenTeleportDist = 120.0                 // pixels to teleport sideways
 )
 
 type Enemy struct {
-	X, Y        float64
-	VX, VY      float64
-	Speed       float64
-	TurnRate    float64 // max radians per frame toward player
+	X, Y        float32
+	VX, VY      float32
+	Speed       float32
+	TurnRate    float32 // max radians per frame toward player
 	HP          int
 	MaxHP       int
 	Alive       bool
 	FlashFrames int
 	Type        EnemyType
-	Accel       float64 // per-frame speed increase (Red type)
-	MaxSpeed    float64 // speed cap (Red type)
+	Accel       float32 // per-frame speed increase (Red type)
+	MaxSpeed    float32 // speed cap (Red type)
 	EvadeTick     int     // frame counter for Green evasion switching
-	EvadeSign     float64 // +1 or -1 for Green evasion direction
+	EvadeSign     float32 // +1 or -1 for Green evasion direction
 	TeleportTimer int     // frames until next teleport (Green/Brain)
 }
 
@@ -97,23 +96,23 @@ func updateEnemies(g *Game) {
 		// Steer toward player (with evasion offset for Green), limited by turn rate.
 		dx := g.Player.X - e.X
 		dy := g.Player.Y - e.Y
-		dist := math.Sqrt(dx*dx + dy*dy)
+		dist := sqrt32(dx*dx + dy*dy)
 		if dist > 1 {
-			desiredAngle := math.Atan2(dy, dx)
+			desiredAngle := atan232(dy, dx)
 
 			// Green: offset the desired angle to weave.
 			if e.Type == EnemyGreen {
 				desiredAngle += EnemyGreenEvadeAngle * e.EvadeSign
 			}
 
-			currentAngle := math.Atan2(e.VY, e.VX)
+			currentAngle := atan232(e.VY, e.VX)
 			diff := desiredAngle - currentAngle
 			// Normalize to [-pi, pi].
-			for diff > math.Pi {
-				diff -= 2 * math.Pi
+			for diff > pi32 {
+				diff -= 2 * pi32
 			}
-			for diff < -math.Pi {
-				diff += 2 * math.Pi
+			for diff < -pi32 {
+				diff += 2 * pi32
 			}
 			// Clamp turn.
 			if diff > e.TurnRate {
@@ -122,8 +121,8 @@ func updateEnemies(g *Game) {
 				diff = -e.TurnRate
 			}
 			newAngle := currentAngle + diff
-			e.VX = math.Cos(newAngle) * e.Speed
-			e.VY = math.Sin(newAngle) * e.Speed
+			e.VX = cos32(newAngle) * e.Speed
+			e.VY = sin32(newAngle) * e.Speed
 		}
 		e.X += e.VX
 		e.Y += e.VY
@@ -147,19 +146,19 @@ func updateEnemies(g *Game) {
 // Picks a random direction, clamps to arena bounds.
 func teleportBrain(g *Game, e *Enemy) {
 	// Perpendicular to current heading.
-	heading := math.Atan2(e.VY, e.VX)
-	perpAngle := heading + math.Pi/2
+	heading := atan232(e.VY, e.VX)
+	perpAngle := heading + pi32/2
 	if rand.Intn(2) == 0 {
-		perpAngle = heading - math.Pi/2
+		perpAngle = heading - pi32/2
 	}
 
-	newX := e.X + math.Cos(perpAngle)*EnemyGreenTeleportDist
-	newY := e.Y + math.Sin(perpAngle)*EnemyGreenTeleportDist
+	newX := e.X + cos32(perpAngle)*EnemyGreenTeleportDist
+	newY := e.Y + sin32(perpAngle)*EnemyGreenTeleportDist
 
 	// Clamp to arena bounds with margin so they don't land in a wall.
-	margin := EnemyRadius + 5
-	newX = math.Max(ArenaLeft()+margin, math.Min(newX, ArenaRight()-margin))
-	newY = math.Max(ArenaTop()+margin, math.Min(newY, ArenaBottom()-margin))
+	margin := float32(EnemyRadius + 5)
+	newX = max(ArenaLeft()+margin, min(newX, ArenaRight()-margin))
+	newY = max(ArenaTop()+margin, min(newY, ArenaBottom()-margin))
 
 	// Particles at old position (vanish).
 	spawnExplosion(g, e.X, e.Y, ColorEnemyGreen, 12)
@@ -174,12 +173,12 @@ func teleportBrain(g *Game, e *Enemy) {
 // enemyHitsWall returns true if the enemy is outside the arena bounds,
 // excluding the gate openings where enemies enter.
 func enemyHitsWall(e *Enemy) bool {
-	halfGate := float64(GateWidth) / 2
-	r := EnemyRadius
+	halfGate := float32(GateWidth) / 2
+	r := float32(EnemyRadius)
 	top, bottom := ArenaTop(), ArenaBottom()
 	left, right := ArenaLeft(), ArenaRight()
-	midX := float64(ScreenWidth) / 2
-	midY := float64(ScreenHeight) / 2
+	midX := float32(ScreenWidth) / 2
+	midY := float32(ScreenHeight) / 2
 
 	// Each wall: if enemy is beyond it, check whether it's inside the gate opening.
 	if e.Y-r < top && (e.X < midX-halfGate || e.X > midX+halfGate) {
@@ -203,7 +202,7 @@ func spawnEnemyThrustParticles(g *Game) {
 		if !e.Alive {
 			continue
 		}
-		speed := math.Sqrt(e.VX*e.VX + e.VY*e.VY)
+		speed := sqrt32(e.VX*e.VX + e.VY*e.VY)
 		if speed < 0.5 {
 			continue
 		}
@@ -214,12 +213,12 @@ func spawnEnemyThrustParticles(g *Game) {
 	}
 }
 
-func drawEnemies(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawEnemies(screen *ebiten.Image, g *Game, ox, oy float32) {
 	// During respawn freeze, enemies blink — faster as timer approaches 0.
 	respawnBlink := false
 	if g.State == StateRespawn {
 		// Blink period shrinks from 30 frames down to 6 as timer runs out.
-		frac := float64(g.RespawnTimer) / float64(RespawnFreeze)
+		frac := float32(g.RespawnTimer) / float32(RespawnFreeze)
 		period := int(6 + 24*frac) // 30 at start → 6 near end
 		if period < 2 {
 			period = 2
@@ -234,8 +233,8 @@ func drawEnemies(screen *ebiten.Image, g *Game, ox, oy float64) {
 			continue // hidden during this blink phase
 		}
 
-		cx := float32(e.X + ox)
-		cy := float32(e.Y + oy)
+		cx := e.X + ox
+		cy := e.Y + oy
 
 		// Shield ring color: cyan→hotpink based on HP.
 		shieldCol := ColorEnemy
@@ -257,7 +256,7 @@ func drawEnemies(screen *ebiten.Image, g *Game, ox, oy float64) {
 		}
 
 		r := float32(EnemyRadius)
-		angle := math.Atan2(e.VY, e.VX)
+		angle := atan232(e.VY, e.VX)
 		drawEnemyShape(screen, cx, cy, r, angle, shieldCol, innerCol)
 	}
 }

@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -43,10 +42,10 @@ type PlayerPowerUps struct {
 }
 
 type PowerUp struct {
-	X, Y     float64
+	X, Y     float32
 	Type     PowerUpType
 	Life     int // frames remaining (0 = dead)
-	Rotation float64
+	Rotation float32
 }
 
 func updatePowerUps(g *Game) {
@@ -61,7 +60,7 @@ func updatePowerUps(g *Game) {
 	g.PowerUps = compact(g.PowerUps, func(p *PowerUp) bool { return p.Life > 0 })
 }
 
-func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float32) {
 	for i := range g.PowerUps {
 		pu := &g.PowerUps[i]
 
@@ -77,10 +76,10 @@ func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float64) {
 		}
 
 		// Bob animation.
-		bob := math.Sin(float64(g.Tick)*PowerUpBobSpeed) * PowerUpBobAmount
+		bob := sin32(float32(g.Tick)*PowerUpBobSpeed) * PowerUpBobAmount
 
-		cx := float32(pu.X + ox)
-		cy := float32(pu.Y + oy + bob)
+		cx := pu.X + ox
+		cy := pu.Y + oy + bob
 		r := float32(PowerUpRadius)
 
 		var col color.RGBA
@@ -116,7 +115,7 @@ func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float64) {
 }
 
 // drawShieldOverlay draws a hexagonal ring around the player when shield is held.
-func drawShieldOverlay(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawShieldOverlay(screen *ebiten.Image, g *Game, ox, oy float32) {
 	if !g.PlayerPowerUps.Shield || !g.Player.Alive {
 		return
 	}
@@ -124,14 +123,14 @@ func drawShieldOverlay(screen *ebiten.Image, g *Game, ox, oy float64) {
 	if g.Player.InvulnFrames > 0 && (g.Player.InvulnFrames/4)%2 == 0 {
 		return
 	}
-	cx := float32(g.Player.X + ox)
-	cy := float32(g.Player.Y + oy)
+	cx := g.Player.X + ox
+	cy := g.Player.Y + oy
 	r := float32(PlayerRadius + 10)
 	// Slow pulse.
-	pulse := float32(0.5 + 0.5*math.Sin(float64(g.Tick)*0.08))
+	pulse := 0.5 + 0.5*sin32(float32(g.Tick)*0.08)
 	dimShield := color.RGBA{0x1A, 0x6E, 0x2A, 0xFF}
 	col := lerpColor(dimShield, ColorShield, pulse)
-	drawPolygon(screen, cx, cy, r, 6, float64(g.Tick)*0.02, 2, col)
+	drawPolygon(screen, cx, cy, r, 6, float32(g.Tick)*0.02, 2, col)
 }
 
 // powerUpUnlockWave maps each power-up type to the wave it first becomes available.
@@ -143,7 +142,7 @@ var powerUpUnlockWave = [PowerUpCount]int{
 	PowerUpMine:      5,
 }
 
-func spawnPowerUpDrop(g *Game, x, y float64, waveNumber int) {
+func spawnPowerUpDrop(g *Game, x, y float32, waveNumber int) {
 	if rand.Float64() > PowerUpDropChance {
 		return
 	}

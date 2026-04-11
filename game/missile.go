@@ -31,9 +31,9 @@ var (
 )
 
 type Missile struct {
-	X, Y  float64
-	Angle float64
-	Speed float64
+	X, Y  float32
+	Angle float32
+	Speed float32
 	Age   int
 	Alive bool
 }
@@ -55,9 +55,9 @@ func updateMissiles(g *Game) {
 		}
 
 		// Find nearest enemy in forward hemisphere.
-		headX := math.Cos(m.Angle)
-		headY := math.Sin(m.Angle)
-		bestDist := math.MaxFloat64
+		headX := cos32(m.Angle)
+		headY := sin32(m.Angle)
+		bestDist := float32(math.MaxFloat32)
 		bestAngle := m.Angle
 		hasTarget := false
 
@@ -77,14 +77,14 @@ func updateMissiles(g *Game) {
 			dist := dx*dx + dy*dy
 			if dist < bestDist {
 				bestDist = dist
-				bestAngle = math.Atan2(dy, dx)
+				bestAngle = atan232(dy, dx)
 				hasTarget = true
 			}
 		}
 
 		// Steer toward target.
 		if hasTarget {
-			diff := math.Remainder(bestAngle-m.Angle, 2*math.Pi)
+			diff := remainder32(bestAngle-m.Angle, 2*pi32)
 			if diff > MissileTurnRate {
 				diff = MissileTurnRate
 			} else if diff < -MissileTurnRate {
@@ -93,8 +93,8 @@ func updateMissiles(g *Game) {
 			m.Angle += diff
 		}
 
-		vx := math.Cos(m.Angle) * m.Speed
-		vy := math.Sin(m.Angle) * m.Speed
+		vx := cos32(m.Angle) * m.Speed
+		vy := sin32(m.Angle) * m.Speed
 		m.X += vx
 		m.Y += vy
 
@@ -104,8 +104,8 @@ func updateMissiles(g *Game) {
 		// Wall collision — explode on impact.
 		if m.X < ArenaLeft() || m.X > ArenaRight() ||
 			m.Y < ArenaTop() || m.Y > ArenaBottom() {
-			ix := math.Max(ArenaLeft(), math.Min(m.X, ArenaRight()))
-			iy := math.Max(ArenaTop(), math.Min(m.Y, ArenaBottom()))
+			ix := max(ArenaLeft(), min(m.X, ArenaRight()))
+			iy := max(ArenaTop(), min(m.Y, ArenaBottom()))
 			m.Alive = false
 			missileExplode(g, ix, iy)
 		}
@@ -136,13 +136,13 @@ func checkMissileCollisions(g *Game) {
 	}
 }
 
-func missileExplode(g *Game, x, y float64) {
+func missileExplode(g *Game, x, y float32) {
 	aoeExplode(g, x, y, missileBlastRadSq, EventMissileExploded)
 }
 
 func fireMissile(g *Game) {
-	dx := math.Cos(g.Turret.Angle)
-	dy := math.Sin(g.Turret.Angle)
+	dx := cos32(g.Turret.Angle)
+	dy := sin32(g.Turret.Angle)
 	spawnX := g.Player.X + dx*TurretLength
 	spawnY := g.Player.Y + dy*TurretLength
 
@@ -159,79 +159,79 @@ func fireMissile(g *Game) {
 
 // spawnMissileTrail emits smoke and flame particles behind the missile.
 func spawnMissileTrail(g *Game, m *Missile) {
-	tailX := m.X - math.Cos(m.Angle)*MissileRadius
-	tailY := m.Y - math.Sin(m.Angle)*MissileRadius
+	tailX := m.X - cos32(m.Angle)*MissileRadius
+	tailY := m.Y - sin32(m.Angle)*MissileRadius
 
 	// Flame particles (bright, short-lived).
 	for i := 0; i < 2; i++ {
-		spread := (rand.Float64() - 0.5) * 0.6
-		speed := 1.0 + rand.Float64()*1.5
-		ejectAngle := m.Angle + math.Pi + spread
+		spread := (rand.Float32() - 0.5) * 0.6
+		speed := 1.0 + rand.Float32()*1.5
+		ejectAngle := m.Angle + pi32 + spread
 		life := 8 + rand.Intn(8)
 		g.Particles = append(g.Particles, Particle{
 			X: tailX, Y: tailY,
-			VX:      math.Cos(ejectAngle) * speed,
-			VY:      math.Sin(ejectAngle) * speed,
+			VX:      cos32(ejectAngle) * speed,
+			VY:      sin32(ejectAngle) * speed,
 			Life:    life,
 			MaxLife: life,
-			Size:    2 + float32(rand.Float64()*2),
+			Size:    2 + rand.Float32()*2,
 			Color:   colorMissileFlame,
 		})
 	}
 
 	// Smoke particles (dim, longer-lived).
 	if m.Age%2 == 0 {
-		spread := (rand.Float64() - 0.5) * 0.4
-		speed := 0.3 + rand.Float64()*0.8
-		ejectAngle := m.Angle + math.Pi + spread
+		spread := (rand.Float32() - 0.5) * 0.4
+		speed := 0.3 + rand.Float32()*0.8
+		ejectAngle := m.Angle + pi32 + spread
 		life := 20 + rand.Intn(15)
 		g.Particles = append(g.Particles, Particle{
 			X: tailX, Y: tailY,
-			VX:      math.Cos(ejectAngle) * speed,
-			VY:      math.Sin(ejectAngle) * speed,
+			VX:      cos32(ejectAngle) * speed,
+			VY:      sin32(ejectAngle) * speed,
 			Life:    life,
 			MaxLife: life,
-			Size:    3 + float32(rand.Float64()*2),
+			Size:    3 + rand.Float32()*2,
 			Color:   colorMissileSmoke,
 		})
 	}
 }
 
 // emitBurst spawns a radial burst of particles — used by spawnMissileBlast layers.
-func emitBurst(g *Game, x, y float64, count int, speedMin, speedMax float64, lifeMin, lifeMax int, sizeMin, sizeMax float32, col color.RGBA) {
+func emitBurst(g *Game, x, y float32, count int, speedMin, speedMax float32, lifeMin, lifeMax int, sizeMin, sizeMax float32, col color.RGBA) {
 	for i := 0; i < count; i++ {
-		angle := rand.Float64() * 2 * math.Pi
-		speed := speedMin + rand.Float64()*(speedMax-speedMin)
+		angle := rand.Float32() * 2 * pi32
+		speed := speedMin + rand.Float32()*(speedMax-speedMin)
 		life := lifeMin + rand.Intn(lifeMax-lifeMin+1)
 		g.Particles = append(g.Particles, Particle{
 			X: x, Y: y,
-			VX:      math.Cos(angle) * speed,
-			VY:      math.Sin(angle) * speed,
+			VX:      cos32(angle) * speed,
+			VY:      sin32(angle) * speed,
 			Life:    life,
 			MaxLife: life,
-			Size:    sizeMin + float32(rand.Float64())*float32(sizeMax-sizeMin),
+			Size:    sizeMin + rand.Float32()*(sizeMax-sizeMin),
 			Color:   col,
 		})
 	}
 }
 
 // spawnMissileBlast creates a large ring explosion for missile detonation.
-func spawnMissileBlast(g *Game, x, y float64) {
+func spawnMissileBlast(g *Game, x, y float32) {
 	emitBurst(g, x, y, 25, 2.0, 7.0, 25, 44, 3, 7, colorBlastInner) // inner hot burst
 	emitBurst(g, x, y, 20, 3.0, 7.0, 30, 54, 2, 5, colorBlastOuter) // outer ring
 	emitBurst(g, x, y, 15, 0.5, 2.5, 40, 69, 4, 8, colorMissileSmoke) // smoke cloud
 }
 
-func drawMissiles(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawMissiles(screen *ebiten.Image, g *Game, ox, oy float32) {
 	for i := range g.Missiles {
 		m := &g.Missiles[i]
-		cx := float32(m.X + ox)
-		cy := float32(m.Y + oy)
-		cosA := float32(math.Cos(m.Angle))
-		sinA := float32(math.Sin(m.Angle))
+		cx := m.X + ox
+		cy := m.Y + oy
+		cosA := cos32(m.Angle)
+		sinA := sin32(m.Angle)
 
 		// Pulsing outer glow.
-		glowPulse := float32(1.0 + 0.2*math.Sin(float64(m.Age)*0.3))
+		glowPulse := 1.0 + 0.2*sin32(float32(m.Age)*0.3)
 		glowR := (MissileRadius + 4) * glowPulse
 		glowCol := colorBlastOuter
 		glowCol.A = 0x55

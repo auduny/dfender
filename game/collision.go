@@ -8,7 +8,7 @@ const (
 )
 
 // aoeExplode kills all enemies within radiusSq of (x,y) and emits evt.
-func aoeExplode(g *Game, x, y, radiusSq float64, evt EventType) {
+func aoeExplode(g *Game, x, y, radiusSq float32, evt EventType) {
 	for i := range g.Enemies {
 		e := &g.Enemies[i]
 		if !e.Alive {
@@ -22,12 +22,34 @@ func aoeExplode(g *Game, x, y, radiusSq float64, evt EventType) {
 				Type:   EventEnemyKilled,
 				X:      e.X,
 				Y:      e.Y,
-				Value:  float64(e.MaxHP) * 100,
+				Value:  float32(e.MaxHP) * 100,
 				Silent: true,
 			})
 		}
 	}
 	g.Events = append(g.Events, Event{Type: evt, X: x, Y: y})
+}
+
+// checkPowerUpCollisions detects player–powerup overlaps and emits pickup events.
+// Separated so it can run during wave intro (when full collision checks are skipped).
+func checkPowerUpCollisions(g *Game) {
+	for i := range g.PowerUps {
+		pu := &g.PowerUps[i]
+		if pu.Life <= 0 {
+			continue
+		}
+		dx := g.Player.X - pu.X
+		dy := g.Player.Y - pu.Y
+		if dx*dx+dy*dy < playerPowerUpRadSq {
+			pu.Life = 0
+			g.Events = append(g.Events, Event{
+				Type:  EventPowerUpPickedUp,
+				X:     pu.X,
+				Y:     pu.Y,
+				Value: float32(pu.Type),
+			})
+		}
+	}
 }
 
 func checkCollisions(g *Game) {
@@ -57,7 +79,7 @@ func checkCollisions(g *Game) {
 					e.Alive = false
 					g.Events = append(g.Events, Event{
 						Type: EventEnemyKilled, X: e.X, Y: e.Y,
-						Value: float64(e.MaxHP) * 100,
+						Value: float32(e.MaxHP) * 100,
 					})
 				} else {
 					e.FlashFrames = 6
@@ -70,24 +92,8 @@ func checkCollisions(g *Game) {
 		}
 	}
 
-	// PowerUp vs player — squared distance.
-	for i := range g.PowerUps {
-		pu := &g.PowerUps[i]
-		if pu.Life <= 0 {
-			continue
-		}
-		dx := g.Player.X - pu.X
-		dy := g.Player.Y - pu.Y
-		if dx*dx+dy*dy < playerPowerUpRadSq {
-			pu.Life = 0
-			g.Events = append(g.Events, Event{
-				Type:  EventPowerUpPickedUp,
-				X:     pu.X,
-				Y:     pu.Y,
-				Value: float64(pu.Type),
-			})
-		}
-	}
+	checkPowerUpCollisions(g)
+
 
 	// Enemy vs player — squared distance (skip if invulnerable).
 	if g.Player.InvulnFrames > 0 {
@@ -112,7 +118,7 @@ func checkCollisions(g *Game) {
 					Type:  EventEnemyKilled,
 					X:     e.X,
 					Y:     e.Y,
-					Value: float64(e.MaxHP) * 100,
+					Value: float32(e.MaxHP) * 100,
 				})
 				break
 			}

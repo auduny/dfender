@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -10,34 +9,34 @@ import (
 )
 
 type Particle struct {
-	X, Y     float64
-	VX, VY   float64
+	X, Y     float32
+	VX, VY   float32
 	Life     int // frames remaining
 	MaxLife  int
 	Size     float32
 	Color    color.RGBA
 }
 
-func spawnExplosion(g *Game, x, y float64, col color.RGBA, count int) {
+func spawnExplosion(g *Game, x, y float32, col color.RGBA, count int) {
 	for i := 0; i < count; i++ {
-		angle := rand.Float64() * 2 * math.Pi
-		speed := 1.0 + rand.Float64()*4.0
+		angle := rand.Float32() * 2 * pi32
+		speed := 1.0 + rand.Float32()*4.0
 		life := 40 + rand.Intn(50)
 		g.Particles = append(g.Particles, Particle{
 			X: x, Y: y,
-			VX: math.Cos(angle) * speed,
-			VY: math.Sin(angle) * speed,
+			VX: cos32(angle) * speed,
+			VY: sin32(angle) * speed,
 			Life: life, MaxLife: life,
-			Size:  3 + float32(rand.Float64()*4),
+			Size:  3 + rand.Float32()*4,
 			Color: col,
 		})
 	}
 }
 
-func spawnDeathExplosion(g *Game, x, y float64) {
+func spawnDeathExplosion(g *Game, x, y float32) {
 	for i := 0; i < 80; i++ {
-		angle := rand.Float64() * 2 * math.Pi
-		speed := 0.5 + rand.Float64()*6.0
+		angle := rand.Float32() * 2 * pi32
+		speed := 0.5 + rand.Float32()*6.0
 		life := 60 + rand.Intn(90) // 1–2.5 seconds — much longer than normal
 		col := ColorPlayer
 		// Mix in some white/orange particles for variety.
@@ -46,26 +45,26 @@ func spawnDeathExplosion(g *Game, x, y float64) {
 		}
 		g.Particles = append(g.Particles, Particle{
 			X: x, Y: y,
-			VX: math.Cos(angle) * speed,
-			VY: math.Sin(angle) * speed,
+			VX: cos32(angle) * speed,
+			VY: sin32(angle) * speed,
 			Life: life, MaxLife: life,
-			Size:  3 + float32(rand.Float64()*4),
+			Size:  3 + rand.Float32()*4,
 			Color: col,
 		})
 	}
 }
 
-func spawnThrustParticles(g *Game, x, y, dirX, dirY float64, col color.RGBA) {
+func spawnThrustParticles(g *Game, x, y, dirX, dirY float32, col color.RGBA) {
 	for i := 0; i < 5; i++ {
-		spread := (rand.Float64() - 0.5) * 0.5
-		speed := 2.0 + rand.Float64()*2.0
+		spread := (rand.Float32() - 0.5) * 0.5
+		speed := 2.0 + rand.Float32()*2.0
 		life := 10 + rand.Intn(10)
 		g.Particles = append(g.Particles, Particle{
 			X: x, Y: y,
 			VX: dirX*speed + spread,
 			VY: dirY*speed + spread,
 			Life: life, MaxLife: life,
-			Size:  1 + float32(rand.Float64()*2),
+			Size:  1 + rand.Float32()*2,
 			Color: col,
 		})
 	}
@@ -90,7 +89,7 @@ func clampByte(v float32) uint8 {
 	return uint8(v)
 }
 
-func drawParticles(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawParticles(screen *ebiten.Image, g *Game, ox, oy float32) {
 	for i := range g.Particles {
 		p := &g.Particles[i]
 		t := float32(p.Life) / float32(p.MaxLife)
@@ -106,8 +105,8 @@ func drawParticles(screen *ebiten.Image, g *Game, ox, oy float64) {
 		col.G = clampByte(float32(col.G) * brightness)
 		col.B = clampByte(float32(col.B) * brightness)
 		col.A = uint8(float32(col.A) * t)
-		cx := float32(p.X + ox)
-		cy := float32(p.Y + oy)
+		cx := p.X + ox
+		cy := p.Y + oy
 		vector.DrawFilledCircle(screen, cx, cy, p.Size*t, col, AntiAlias)
 	}
 }

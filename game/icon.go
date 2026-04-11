@@ -2,7 +2,6 @@ package game
 
 import (
 	"image"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -31,7 +30,7 @@ func (g *Game) generateWindowIcon() {
 	// Player hexagon ship.
 	shipY := float32(size) * 0.65
 	vector.StrokeCircle(scene, cx, shipY, 25, 4, ColorBorderDim, true)
-	drawPolygon(scene, cx, shipY, 22, 6, -math.Pi/2, 3, ColorPlayer)
+	drawPolygon(scene, cx, shipY, 22, 6, -pi32/2, 3, ColorPlayer)
 	vector.DrawFilledCircle(scene, cx, shipY, 4, ColorPlayer, true)
 
 	// Read pixels into a standard image.

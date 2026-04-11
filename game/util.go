@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -12,14 +11,14 @@ import (
 const AntiAlias = true
 
 // drawPolygon draws a regular polygon outline.
-func drawPolygon(screen *ebiten.Image, cx, cy, radius float32, sides int, startAngle float64, thickness float32, col color.RGBA) {
+func drawPolygon(screen *ebiten.Image, cx, cy, radius float32, sides int, startAngle float32, thickness float32, col color.RGBA) {
 	for i := 0; i < sides; i++ {
-		a1 := startAngle + float64(i)*2*math.Pi/float64(sides)
-		a2 := startAngle + float64(i+1)*2*math.Pi/float64(sides)
-		x1 := cx + radius*float32(math.Cos(a1))
-		y1 := cy + radius*float32(math.Sin(a1))
-		x2 := cx + radius*float32(math.Cos(a2))
-		y2 := cy + radius*float32(math.Sin(a2))
+		a1 := startAngle + float32(i)*2*pi32/float32(sides)
+		a2 := startAngle + float32(i+1)*2*pi32/float32(sides)
+		x1 := cx + radius*cos32(a1)
+		y1 := cy + radius*sin32(a1)
+		x2 := cx + radius*cos32(a2)
+		y2 := cy + radius*sin32(a2)
 		vector.StrokeLine(screen, x1, y1, x2, y2, thickness, col, AntiAlias)
 	}
 }

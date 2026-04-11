@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -28,13 +27,13 @@ var spikeDirs [8][2]float32
 
 func init() {
 	for i := 0; i < 8; i++ {
-		a := float64(i) * math.Pi / 4
-		spikeDirs[i] = [2]float32{float32(math.Cos(a)), float32(math.Sin(a))}
+		a := float32(i) * pi32 / 4
+		spikeDirs[i] = [2]float32{cos32(a), sin32(a)}
 	}
 }
 
 type Mine struct {
-	X, Y  float64
+	X, Y  float32
 	Age   int
 	Alive bool
 }
@@ -73,7 +72,7 @@ func checkMineCollisions(g *Game) {
 	}
 }
 
-func mineExplode(g *Game, x, y float64) {
+func mineExplode(g *Game, x, y float32) {
 	aoeExplode(g, x, y, mineBlastRadSq, EventMineExploded)
 }
 
@@ -87,20 +86,20 @@ func deployMine(g *Game) {
 	})
 }
 
-func spawnMineBlast(g *Game, x, y float64) {
+func spawnMineBlast(g *Game, x, y float32) {
 	emitBurst(g, x, y, 35, 2.5, 9.0, 30, 50, 3, 8, colorBlastInner)
 	emitBurst(g, x, y, 30, 4.0, 9.0, 35, 60, 2, 6, colorMineBlast)
 	emitBurst(g, x, y, 20, 0.5, 3.0, 45, 75, 4, 9, ColorSmoke)
 }
 
-func drawMines(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawMines(screen *ebiten.Image, g *Game, ox, oy float32) {
 	for i := range g.Mines {
 		m := &g.Mines[i]
-		cx := float32(m.X + ox)
-		cy := float32(m.Y + oy)
+		cx := m.X + ox
+		cy := m.Y + oy
 
 		// Slow pulse glow.
-		pulse := float32(0.5 + 0.3*math.Sin(float64(m.Age)*0.08))
+		pulse := 0.5 + 0.3*sin32(float32(m.Age)*0.08)
 		glowR := float32(MineRadius+6) * pulse
 		glowCol := colorMinePulse
 		glowCol.A = uint8(float32(0x66) * pulse)
@@ -127,6 +126,6 @@ func drawMines(screen *ebiten.Image, g *Game, ox, oy float64) {
 	}
 }
 
-func spawnMinePlacedEffect(g *Game, x, y float64) {
+func spawnMinePlacedEffect(g *Game, x, y float32) {
 	emitBurst(g, x, y, 8, 1.0, 3.0, 15, 25, 2, 4, ColorMine)
 }

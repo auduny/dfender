@@ -44,7 +44,7 @@ func applyJuice(g *Game, e Event) {
 	}
 }
 
-func (g *Game) shake(frames int, amount float64) {
+func (g *Game) shake(frames int, amount float32) {
 	g.ShakeFrames = frames
 	g.ShakeAmount = amount
 }

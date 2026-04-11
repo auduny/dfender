@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"image/color"
-	"math"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -169,7 +168,7 @@ func drawMenuEnemies(screen *ebiten.Image, tick uint64) {
 		initMenuEnemies()
 	}
 
-	angle := float64(tick) * 0.02
+	angle := float32(tick) * 0.02
 	for _, item := range menuEnemies {
 		drawEnemyShape(screen, item.cx, menuEnemyCY, menuEnemyR, angle, ColorEnemy, item.innerCol)
 	}
@@ -219,8 +218,8 @@ func drawMenuPowerUps(screen *ebiten.Image, tick uint64) {
 		initMenuPowerUps()
 	}
 
-	angle := float64(tick) * PowerUpRotSpeed
-	bob := float32(math.Sin(float64(tick)*PowerUpBobSpeed) * PowerUpBobAmount)
+	angle := float32(tick) * PowerUpRotSpeed
+	bob := sin32(float32(tick)*PowerUpBobSpeed) * PowerUpBobAmount
 
 	for _, item := range menuPowerUps {
 		py := menuPowerUpCY + bob
@@ -236,7 +235,7 @@ func drawMenuPowerUpLabels(screen *ebiten.Image, tick uint64) {
 		return
 	}
 
-	bob := float32(math.Sin(float64(tick)*PowerUpBobSpeed) * PowerUpBobAmount)
+	bob := sin32(float32(tick)*PowerUpBobSpeed) * PowerUpBobAmount
 
 	for _, item := range menuPowerUps {
 		py := menuPowerUpCY + bob

@@ -1,8 +1,6 @@
 package game
 
 import (
-	"math"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
@@ -19,13 +17,13 @@ const (
 )
 
 type Player struct {
-	X, Y         float64
-	VX, VY       float64
+	X, Y         float32
+	VX, VY       float32
 	Alive        bool
 	InvulnFrames int // frames of invulnerability remaining
 }
 
-func NewPlayer(x, y float64) Player {
+func NewPlayer(x, y float32) Player {
 	return Player{X: x, Y: y, Alive: true}
 }
 
@@ -50,8 +48,8 @@ func (p *Player) ThrusterCount() int {
 	return n
 }
 
-func (p *Player) Speed() float64 {
-	return math.Sqrt(p.VX*p.VX + p.VY*p.VY)
+func (p *Player) Speed() float32 {
+	return sqrt32(p.VX*p.VX + p.VY*p.VY)
 }
 
 func (p *Player) Update() {
@@ -95,27 +93,27 @@ func (p *Player) CheckWalls(g *Game) {
 	bottom := ArenaBottom() - PlayerRadius
 
 	collided := false
-	impactSpeed := 0.0
+	var impactSpeed float32
 
 	if p.X < left {
-		impactSpeed = math.Max(impactSpeed, math.Abs(p.VX))
+		impactSpeed = max(impactSpeed, abs32(p.VX))
 		p.X = left
 		p.VX = -p.VX * WallBounceDamp
 		collided = true
 	} else if p.X > right {
-		impactSpeed = math.Max(impactSpeed, math.Abs(p.VX))
+		impactSpeed = max(impactSpeed, abs32(p.VX))
 		p.X = right
 		p.VX = -p.VX * WallBounceDamp
 		collided = true
 	}
 
 	if p.Y < top {
-		impactSpeed = math.Max(impactSpeed, math.Abs(p.VY))
+		impactSpeed = max(impactSpeed, abs32(p.VY))
 		p.Y = top
 		p.VY = -p.VY * WallBounceDamp
 		collided = true
 	} else if p.Y > bottom {
-		impactSpeed = math.Max(impactSpeed, math.Abs(p.VY))
+		impactSpeed = max(impactSpeed, abs32(p.VY))
 		p.Y = bottom
 		p.VY = -p.VY * WallBounceDamp
 		collided = true
@@ -151,7 +149,7 @@ func (p *Player) SpawnThrustParticles(g *Game) {
 	}
 }
 
-func (p *Player) Draw(screen *ebiten.Image, ox, oy float64, heat float64) {
+func (p *Player) Draw(screen *ebiten.Image, ox, oy float32, heat float32) {
 	if !p.Alive {
 		return
 	}
@@ -161,17 +159,17 @@ func (p *Player) Draw(screen *ebiten.Image, ox, oy float64, heat float64) {
 		return
 	}
 
-	cx := float32(p.X + ox)
-	cy := float32(p.Y + oy)
+	cx := p.X + ox
+	cy := p.Y + oy
 	r := float32(PlayerRadius)
 
 	// Tint ship from gold toward red as heat rises.
-	shipColor := lerpColor(ColorPlayer, ColorHeatHot, float32(heat))
+	shipColor := lerpColor(ColorPlayer, ColorHeatHot, heat)
 
 	// Outer glow ring (dimmer, larger).
 	vector.StrokeCircle(screen, cx, cy, r+4, 6, ColorBorderDim, AntiAlias)
 
-	drawPolygon(screen, cx, cy, r, 6, -math.Pi/2, 4, shipColor)
+	drawPolygon(screen, cx, cy, r, 6, -pi32/2, 4, shipColor)
 
 	// Inner dot.
 	vector.DrawFilledCircle(screen, cx, cy, 5, shipColor, AntiAlias)

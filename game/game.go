@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -107,7 +106,7 @@ type Game struct {
 
 	// Screen shake
 	ShakeFrames int
-	ShakeAmount float64
+	ShakeAmount float32
 
 	// Tick counter for animations
 	Tick uint64
@@ -145,7 +144,7 @@ func New(musicData, fontData []byte) *Game {
 
 func (g *Game) reset() {
 	g.State = StateWaveIntro
-	g.Player = NewPlayer(ScreenWidth/2, ScreenHeight/2)
+	g.Player = NewPlayer(ScreenWidth/2, ScreenHeight/2+100)
 	g.Turret = NewTurret()
 	g.Projectiles = g.Projectiles[:0]
 	g.Enemies = g.Enemies[:0]
@@ -323,6 +322,7 @@ func (g *Game) updateWaveIntro() {
 	g.Turret.Update(g)
 	updateProjectiles(g)
 	updatePowerUps(g)
+	checkPowerUpCollisions(g)
 	updateParticles(g)
 
 	g.Wave.IntroTick++
@@ -345,7 +345,7 @@ func (g *Game) submitHighScore() {
 }
 
 func (g *Game) respawn() {
-	g.Player = NewPlayer(ScreenWidth/2, ScreenHeight/2)
+	g.Player = NewPlayer(ScreenWidth/2, ScreenHeight/2+100)
 	g.Turret.Heat = 0
 	g.Turret.Cooldown = 0
 	g.RespawnTimer = RespawnFreeze
@@ -392,10 +392,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// Screen shake offset.
-	var ox, oy float64
+	var ox, oy float32
 	if g.ShakeFrames > 0 {
-		ox = math.Sin(float64(g.Tick)*13.7) * g.ShakeAmount
-		oy = math.Cos(float64(g.Tick)*17.3) * g.ShakeAmount
+		ox = sin32(float32(g.Tick)*13.7) * g.ShakeAmount
+		oy = cos32(float32(g.Tick)*17.3) * g.ShakeAmount
 	}
 
 	// --- Render scene to offscreen image ---
@@ -424,8 +424,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// --- Post-processing ---
 
 	// Heat distortion (when gun is hot).
-	turretTipX := g.Player.X + math.Cos(g.Turret.Angle)*TurretLength
-	turretTipY := g.Player.Y + math.Sin(g.Turret.Angle)*TurretLength
+	turretTipX := g.Player.X + cos32(g.Turret.Angle)*TurretLength
+	turretTipY := g.Player.Y + sin32(g.Turret.Angle)*TurretLength
 	if g.Turret.Heat > 0.3 {
 		s.HeatTemp.Clear()
 		s.ApplyHeatDistortion(s.HeatTemp, s.SceneImage, g.Turret.Heat, turretTipX, turretTipY, g.Tick)
@@ -448,32 +448,32 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 // Arena bounds (inside the margin).
-func ArenaLeft() float64   { return float64(ArenaMargin) }
-func ArenaRight() float64  { return float64(ScreenWidth - ArenaMargin) }
-func ArenaTop() float64    { return float64(ArenaMargin + StatusBarHeight) }
-func ArenaBottom() float64 { return float64(ScreenHeight - ArenaMargin) }
+func ArenaLeft() float32   { return float32(ArenaMargin) }
+func ArenaRight() float32  { return float32(ScreenWidth - ArenaMargin) }
+func ArenaTop() float32    { return float32(ArenaMargin + StatusBarHeight) }
+func ArenaBottom() float32 { return float32(ScreenHeight - ArenaMargin) }
 
 // Gate centers.
 type Gate struct {
-	X, Y    float64
-	DirX    float64 // spawn direction
-	DirY    float64
+	X, Y    float32
+	DirX    float32 // spawn direction
+	DirY    float32
 }
 
 var gates = [4]Gate{
-	{float64(ScreenWidth) / 2, ArenaTop(), 0, 1},
-	{float64(ScreenWidth) / 2, ArenaBottom(), 0, -1},
-	{ArenaLeft(), float64(ScreenHeight) / 2, 1, 0},
-	{ArenaRight(), float64(ScreenHeight) / 2, -1, 0},
+	{float32(ScreenWidth) / 2, ArenaTop(), 0, 1},
+	{float32(ScreenWidth) / 2, ArenaBottom(), 0, -1},
+	{ArenaLeft(), float32(ScreenHeight) / 2, 1, 0},
+	{ArenaRight(), float32(ScreenHeight) / 2, -1, 0},
 }
 
 func Gates() [4]Gate { return gates }
 
-func drawArena(screen *ebiten.Image, g *Game, ox, oy float64) {
-	l := float32(ArenaLeft() + ox)
-	r := float32(ArenaRight() + ox)
-	t := float32(ArenaTop() + oy)
-	b := float32(ArenaBottom() + oy)
+func drawArena(screen *ebiten.Image, g *Game, ox, oy float32) {
+	l := ArenaLeft() + ox
+	r := ArenaRight() + ox
+	t := ArenaTop() + oy
+	b := ArenaBottom() + oy
 	w := float32(3.0)
 
 	gates := Gates()
@@ -481,22 +481,22 @@ func drawArena(screen *ebiten.Image, g *Game, ox, oy float64) {
 
 	// Draw border segments, leaving gaps for gates.
 	// Top edge (north gate)
-	gc := float32(gates[0].X + ox)
+	gc := gates[0].X + ox
 	vector.StrokeLine(screen, l, t, gc-hw, t, w, ColorBorder, AntiAlias)
 	vector.StrokeLine(screen, gc+hw, t, r, t, w, ColorBorder, AntiAlias)
 
 	// Bottom edge (south gate)
-	gc = float32(gates[1].X + ox)
+	gc = gates[1].X + ox
 	vector.StrokeLine(screen, l, b, gc-hw, b, w, ColorBorder, AntiAlias)
 	vector.StrokeLine(screen, gc+hw, b, r, b, w, ColorBorder, AntiAlias)
 
 	// Left edge (west gate)
-	gc = float32(gates[2].Y + oy)
+	gc = gates[2].Y + oy
 	vector.StrokeLine(screen, l, t, l, gc-hw, w, ColorBorder, AntiAlias)
 	vector.StrokeLine(screen, l, gc+hw, l, b, w, ColorBorder, AntiAlias)
 
 	// Right edge (east gate)
-	gc = float32(gates[3].Y + oy)
+	gc = gates[3].Y + oy
 	vector.StrokeLine(screen, r, t, r, gc-hw, w, ColorBorder, AntiAlias)
 	vector.StrokeLine(screen, r, gc+hw, r, b, w, ColorBorder, AntiAlias)
 

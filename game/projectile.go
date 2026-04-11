@@ -1,8 +1,6 @@
 package game
 
 import (
-	"math"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
@@ -12,8 +10,8 @@ const (
 )
 
 type Projectile struct {
-	X, Y   float64
-	VX, VY float64
+	X, Y   float32
+	VX, VY float32
 	Alive  bool
 }
 
@@ -30,8 +28,8 @@ func updateProjectiles(g *Game) {
 		if p.X < ArenaLeft() || p.X > ArenaRight() ||
 			p.Y < ArenaTop() || p.Y > ArenaBottom() {
 			// Clamp impact position to arena edge.
-			ix := math.Max(ArenaLeft(), math.Min(p.X, ArenaRight()))
-			iy := math.Max(ArenaTop(), math.Min(p.Y, ArenaBottom()))
+			ix := max(ArenaLeft(), min(p.X, ArenaRight()))
+			iy := max(ArenaTop(), min(p.Y, ArenaBottom()))
 			g.Events = append(g.Events, Event{
 				Type: EventProjectileWallHit,
 				X:    ix,
@@ -43,18 +41,18 @@ func updateProjectiles(g *Game) {
 	g.Projectiles = compact(g.Projectiles, func(p *Projectile) bool { return p.Alive })
 }
 
-func drawProjectiles(screen *ebiten.Image, g *Game, ox, oy float64) {
+func drawProjectiles(screen *ebiten.Image, g *Game, ox, oy float32) {
 	for i := range g.Projectiles {
 		p := &g.Projectiles[i]
-		cx := float32(p.X + ox)
-		cy := float32(p.Y + oy)
+		cx := p.X + ox
+		cy := p.Y + oy
 		// Outer glow.
 		vector.DrawFilledCircle(screen, cx, cy, ProjectileRadius+3, ColorHeatCool, AntiAlias)
 		// Bright core.
 		vector.DrawFilledCircle(screen, cx, cy, ProjectileRadius, ColorProjectile, AntiAlias)
 		// Trail — thicker line behind.
-		tx := float32(p.X - p.VX*0.8 + ox)
-		ty := float32(p.Y - p.VY*0.8 + oy)
+		tx := p.X - p.VX*0.8 + ox
+		ty := p.Y - p.VY*0.8 + oy
 		vector.StrokeLine(screen, cx, cy, tx, ty, 4, ColorHeatCool, AntiAlias)
 	}
 }
