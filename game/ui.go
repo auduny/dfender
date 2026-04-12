@@ -176,7 +176,7 @@ func waveDescription(wave int) string {
 	case 4:
 		return "ENEMIES HAVE 4 HP / MISSILE DROPS"
 	case 5:
-		return "PHANTOM ENEMIES ARRIVE / THEY TELEPORT / MINE DROPS"
+		return "BLINKY ENEMIES ARRIVE / THEY TELEPORT / MINE DROPS"
 	case 6:
 		return "ENEMIES HAVE 6 HP / GOOD LUCK"
 	case 7:

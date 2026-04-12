@@ -37,7 +37,7 @@ const (
 	EnemyRedMaxSpeed     = 4.5
 	EnemyRedTurnRate     = 0.015
 
-	// Green (Brain): moderate speed, sharp turns, evasive offset, teleport.
+	// Green (Blinky): moderate speed, sharp turns, evasive offset, teleport.
 	EnemyGreenSpeed        = 1.8
 	EnemyGreenTurnRate     = 0.06
 	EnemyGreenEvadeAngle   = 15.0 * pi32 / 180.0 // 15 degrees offset
@@ -61,7 +61,7 @@ type Enemy struct {
 	MaxSpeed    float32 // speed cap (Red type)
 	EvadeTick     int     // frame counter for Green evasion switching
 	EvadeSign     float32 // +1 or -1 for Green evasion direction
-	TeleportTimer int     // frames until next teleport (Green/Brain)
+	TeleportTimer int     // frames until next teleport (Blinky)
 }
 
 func updateEnemies(g *Game) {
@@ -79,7 +79,7 @@ func updateEnemies(g *Game) {
 			}
 		}
 
-		// Green (Brain): flip evasion direction periodically + teleport.
+		// Blinky: flip evasion direction periodically + teleport.
 		if e.Type == EnemyGreen {
 			e.EvadeTick++
 			if e.EvadeTick >= EnemyGreenSwitchRate {
@@ -89,7 +89,7 @@ func updateEnemies(g *Game) {
 			e.TeleportTimer--
 			if e.TeleportTimer <= 0 {
 				e.TeleportTimer = EnemyGreenTeleportMin + rand.Intn(EnemyGreenTeleportMax-EnemyGreenTeleportMin)
-				teleportBrain(g, e)
+				teleportBlinky(g, e)
 			}
 		}
 
@@ -142,9 +142,9 @@ func updateEnemies(g *Game) {
 	g.Enemies = compact(g.Enemies, func(e *Enemy) bool { return e.Alive })
 }
 
-// teleportBrain blinks a Brain enemy sideways (perpendicular to heading).
+// teleportBlinky blinks a Blinky enemy sideways (perpendicular to heading).
 // Picks a random direction, clamps to arena bounds.
-func teleportBrain(g *Game, e *Enemy) {
+func teleportBlinky(g *Game, e *Enemy) {
 	// Perpendicular to current heading.
 	heading := atan232(e.VY, e.VX)
 	perpAngle := heading + pi32/2

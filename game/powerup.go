@@ -108,7 +108,7 @@ func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float32) {
 			sides = 7            // heptagon
 		case PowerUpMine:
 			col = ColorMine // orange
-			sides = 8       // octagon
+			sides = -5      // 5-pointed star
 		case PowerUpExtraLife:
 			col = ColorExtraLife // magenta-pink
 			sides = 0           // special: heart shape
@@ -120,6 +120,8 @@ func drawPowerUps(screen *ebiten.Image, g *Game, ox, oy float32) {
 		// Shape.
 		if sides > 0 {
 			drawPolygon(screen, cx, cy, r, sides, pu.Rotation, 3, col)
+		} else if sides < 0 {
+			drawStar(screen, cx, cy, r, -sides, pu.Rotation, 3, col)
 		} else {
 			drawHeart(screen, cx, cy, r, pu.Rotation, 3, col)
 		}
@@ -201,6 +203,15 @@ func spawnPowerUpDrop(g *Game, x, y float32, waveNumber int) {
 	})
 }
 
+// clearPersistentPowerUps removes all persistent powerups (corner drops) at wave end.
+func clearPersistentPowerUps(g *Game) {
+	for i := range g.PowerUps {
+		if g.PowerUps[i].Persistent {
+			g.PowerUps[i].Life = 0
+		}
+	}
+}
+
 // spawnCornerPowerUps places guns and supercool in diagonally opposite corners.
 // Called at the start of each wave from CornerPowerUpWave onward.
 func spawnCornerPowerUps(g *Game) {
@@ -222,6 +233,25 @@ func spawnCornerPowerUps(g *Game) {
 		PowerUp{X: left, Y: top, Type: PowerUpType(topLeft), Life: 1, Persistent: true},
 		PowerUp{X: right, Y: bottom, Type: PowerUpType(bottomRight), Life: 1, Persistent: true},
 	)
+}
+
+// drawStar draws an n-pointed star outline. Outer tips at radius, inner vertices at 40% radius.
+func drawStar(screen *ebiten.Image, cx, cy, radius float32, points int, startAngle, thickness float32, col color.RGBA) {
+	n := points * 2
+	innerR := radius * 0.4
+	for i := 0; i < n; i++ {
+		a1 := startAngle + float32(i)*2*pi32/float32(n)
+		a2 := startAngle + float32(i+1)*2*pi32/float32(n)
+		r1, r2 := radius, innerR
+		if i%2 != 0 {
+			r1, r2 = innerR, radius
+		}
+		x1 := cx + r1*cos32(a1)
+		y1 := cy + r1*sin32(a1)
+		x2 := cx + r2*cos32(a2)
+		y2 := cy + r2*sin32(a2)
+		vector.StrokeLine(screen, x1, y1, x2, y2, thickness, col, AntiAlias)
+	}
 }
 
 // drawHeart draws a heart outline at (cx, cy) with the given size, rotation and style.

@@ -280,6 +280,7 @@ func (g *Game) updatePlaying() {
 			}
 			return
 		case EventWaveComplete:
+			clearPersistentPowerUps(g)
 			g.State = StateWaveIntro
 			g.Wave.NextWave()
 			return

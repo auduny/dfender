@@ -147,7 +147,7 @@ func initMenuEnemies() {
 	menuEnemies = []menuEnemy{
 		{"JOE", ColorEnemyNormal, float32(ScreenWidth)/2 - 200, 0},
 		{"ALPHA", ColorEnemyRed, float32(ScreenWidth) / 2, 0},
-		{"BRAIN", ColorEnemyGreen, float32(ScreenWidth)/2 + 200, 0},
+		{"BLINKY", ColorEnemyGreen, float32(ScreenWidth)/2 + 200, 0},
 	}
 	for i := range menuEnemies {
 		menuEnemies[i].labelW, _ = text.Measure(menuEnemies[i].label, FontMenuSmall, 0)
@@ -202,7 +202,8 @@ func initMenuPowerUps() {
 		{"GUNS", ColorPlayer, 5, 0, 0},
 		{"MISSILE", ColorHeatHot, 4, 0, 0},
 		{"COOL", ColorSupercool, 7, 0, 0},
-		{"MINE", ColorMine, 8, 0, 0},
+		{"MINE", ColorMine, -5, 0, 0},
+		{"LIFE", ColorExtraLife, 0, 0, 0},
 	}
 	spacing := float32(200)
 	startX := float32(ScreenWidth)/2 - spacing*float32(len(menuPowerUps)-1)/2
@@ -224,7 +225,13 @@ func drawMenuPowerUps(screen *ebiten.Image, tick uint64) {
 	for _, item := range menuPowerUps {
 		py := menuPowerUpCY + bob
 		vector.StrokeCircle(screen, item.cx, py, menuPowerUpR+4, 2, item.col, AntiAlias)
-		drawPolygon(screen, item.cx, py, menuPowerUpR, item.sides, angle, 3, item.col)
+		if item.sides > 0 {
+			drawPolygon(screen, item.cx, py, menuPowerUpR, item.sides, angle, 3, item.col)
+		} else if item.sides < 0 {
+			drawStar(screen, item.cx, py, menuPowerUpR, -item.sides, angle, 3, item.col)
+		} else {
+			drawHeart(screen, item.cx, py, menuPowerUpR, angle, 3, item.col)
+		}
 		vector.DrawFilledCircle(screen, item.cx, py, 4, item.col, AntiAlias)
 	}
 }

@@ -64,7 +64,7 @@ func (w *WaveManager) spawnOne(g *Game) {
 	hp := w.Number
 
 	// Pick enemy type based on wave number.
-	// Wave 1-2: all Normal. Wave 3+: mix in Reds. Wave 5+: mix in Greens.
+	// Wave 1-2: all Normal. Wave 3+: mix in Reds. Wave 5+: mix in Blinkys.
 	eType := EnemyNormal
 	if w.Number >= 3 {
 		roll := rand.Float64()
