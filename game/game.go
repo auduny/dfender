@@ -39,6 +39,7 @@ var (
 	ColorSupercool  = color.RGBA{0x44, 0xBB, 0xFF, 0xFF} // blue for supercooling powerup
 	ColorMine       = color.RGBA{0xFF, 0x99, 0x00, 0xFF} // orange for mine powerup
 	ColorSmoke      = color.RGBA{0x99, 0x77, 0x55, 0xCC} // brownish smoke (explosions/trails)
+	ColorExtraLife  = color.RGBA{0xDD, 0x44, 0xBB, 0xFF} // magenta-pink for extra life
 
 	// Enemy inner colors (by type).
 	ColorEnemyNormal = color.RGBA{0x66, 0x66, 0x77, 0xFF} // muted gray (won't blow out under bloom)
@@ -310,6 +311,8 @@ func (g *Game) applyPowerUp(e Event) {
 		if g.PlayerPowerUps.MineCount < MineMaxCount {
 			g.PlayerPowerUps.MineCount++
 		}
+	case PowerUpExtraLife:
+		g.Lives++
 	}
 }
 
@@ -329,6 +332,7 @@ func (g *Game) updateWaveIntro() {
 	if g.Wave.IntroTick > 210 { // 3.5 seconds at 60fps
 		g.State = StatePlaying
 		g.Wave.StartSpawning(g)
+		spawnCornerPowerUps(g)
 	}
 }
 

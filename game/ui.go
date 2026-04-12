@@ -190,7 +190,7 @@ func waveDescription(wave int) string {
 	case 9:
 		return "NO MERCY"
 	case 10:
-		return "ALMOST NOBODY MAKES IT THIS FAR"
+		return "CORNER DROPS ACTIVE / EXTRA LIFE DROPS / GOOD LUCK"
 	default:
 		return fmt.Sprintf("ENEMIES HAVE %d HP", wave)
 	}

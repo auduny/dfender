@@ -13,6 +13,7 @@ type WaveManager struct {
 	SpawnTimer    int // frames until next spawn
 	SpawnInterval int // frames between spawns (computed per wave)
 	GateIndex     int // round-robin gate selection
+	ExtraLifeDropped bool // true if an extra life already dropped this wave
 }
 
 func NewWaveManager() WaveManager {
@@ -22,6 +23,7 @@ func NewWaveManager() WaveManager {
 func (w *WaveManager) NextWave() {
 	w.Number++
 	w.IntroTick = 0
+	w.ExtraLifeDropped = false
 }
 
 func (w *WaveManager) StartSpawning(g *Game) {
