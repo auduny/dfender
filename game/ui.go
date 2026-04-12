@@ -162,10 +162,6 @@ func drawHeatBar(screen *ebiten.Image, g *Game) {
 	// Border.
 	vector.StrokeRect(screen, barX, barY, barW, barH, 1, ColorBorderDim, AntiAlias)
 
-	// Label if overheated.
-	if g.Turret.Cooldown > 0 {
-		drawTextAt(screen, "OVERHEAT", FontHUD, float64(barX)-90, float64(barY)-3, ColorHeatHot)
-	}
 }
 
 // waveDescription returns an informational announcement for the given wave number.
