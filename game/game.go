@@ -59,7 +59,13 @@ const (
 	StateHighScores
 	StateRespawn
 	StatePaused
+	StateSettings
 )
+
+// Settings holds persistent player preferences.
+type Settings struct {
+	CanonRelativeControls bool // W/A/S/D thrust direction follows the turret angle
+}
 
 const (
 	StartingLives  = 3
@@ -127,6 +133,9 @@ type Game struct {
 	// Pause
 	UnpauseTimer   int       // frames remaining in unpause freeze (0 = not unpausing)
 	PrePauseState  GameState // state to return to after unpause
+
+	// Settings (persists across resets)
+	Settings Settings
 
 	iconSet bool // true after window icon has been generated
 }
@@ -206,6 +215,8 @@ func (g *Game) Update() error {
 		g.updatePlaying()
 	case StatePaused:
 		g.updatePaused()
+	case StateSettings:
+		g.updateSettings()
 	case StateWaveIntro:
 		if inpututil.IsKeyJustPressed(ebiten.KeyP) {
 			g.Sound.SetThruster(0)
@@ -244,7 +255,7 @@ func (g *Game) Update() error {
 
 func (g *Game) updatePlaying() {
 	// Systems — order matters.
-	g.Player.Update()
+	g.Player.Update(g)
 	g.Player.SpawnThrustParticles(g)
 	g.Sound.SetThruster(g.Player.ThrusterCount())
 	g.Turret.Update(g)
@@ -319,7 +330,7 @@ func (g *Game) applyPowerUp(e Event) {
 
 func (g *Game) updateWaveIntro() {
 	// Keep the game alive during wave intro — player can still move, particles animate, etc.
-	g.Player.Update()
+	g.Player.Update(g)
 	g.Player.CheckWalls(g)
 	g.Player.SpawnThrustParticles(g)
 	g.Sound.SetThruster(g.Player.ThrusterCount())
@@ -391,7 +402,7 @@ func (g *Game) updatePaused() {
 func (g *Game) Draw(screen *ebiten.Image) {
 	s := g.Shaders
 
-	if g.State == StateMenu || g.State == StateCredits || g.State == StateHighScores {
+	if g.State == StateMenu || g.State == StateCredits || g.State == StateHighScores || g.State == StateSettings {
 		g.drawMenuScreen(screen)
 		return
 	}

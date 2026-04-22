@@ -52,23 +52,48 @@ func (p *Player) Speed() float32 {
 	return sqrt32(p.VX*p.VX + p.VY*p.VY)
 }
 
-func (p *Player) Update() {
+func (p *Player) Update(g *Game) {
 	if !p.Alive {
 		return
 	}
 
 	// Thruster input.
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		p.VY -= ThrustForce
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		p.VY += ThrustForce
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		p.VX -= ThrustForce
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
-		p.VX += ThrustForce
+	if g.Settings.CanonRelativeControls {
+		// Forward = turret direction; right = 90° clockwise from forward.
+		angle := g.Turret.Angle
+		fdx := cos32(angle)
+		fdy := sin32(angle)
+		rdx := -sin32(angle)
+		rdy := cos32(angle)
+		if ebiten.IsKeyPressed(ebiten.KeyW) {
+			p.VX += fdx * ThrustForce
+			p.VY += fdy * ThrustForce
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyS) {
+			p.VX -= fdx * ThrustForce
+			p.VY -= fdy * ThrustForce
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyA) {
+			p.VX -= rdx * ThrustForce
+			p.VY -= rdy * ThrustForce
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyD) {
+			p.VX += rdx * ThrustForce
+			p.VY += rdy * ThrustForce
+		}
+	} else {
+		if ebiten.IsKeyPressed(ebiten.KeyW) {
+			p.VY -= ThrustForce
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyS) {
+			p.VY += ThrustForce
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyA) {
+			p.VX -= ThrustForce
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyD) {
+			p.VX += ThrustForce
+		}
 	}
 
 	// Integrate position.
@@ -135,17 +160,40 @@ func (p *Player) SpawnThrustParticles(g *Game) {
 		return
 	}
 	exhaust := ColorPlayer
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		spawnThrustParticles(g, p.X, p.Y+PlayerRadius, 0, 1, exhaust)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		spawnThrustParticles(g, p.X, p.Y-PlayerRadius, 0, -1, exhaust)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		spawnThrustParticles(g, p.X+PlayerRadius, p.Y, 1, 0, exhaust)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
-		spawnThrustParticles(g, p.X-PlayerRadius, p.Y, -1, 0, exhaust)
+
+	if g.Settings.CanonRelativeControls {
+		angle := g.Turret.Angle
+		fdx := cos32(angle)
+		fdy := sin32(angle)
+		rdx := -sin32(angle)
+		rdy := cos32(angle)
+		r := float32(PlayerRadius)
+		// Exhaust spawns on the side opposite to thrust and flows away from the ship.
+		if ebiten.IsKeyPressed(ebiten.KeyW) {
+			spawnThrustParticles(g, p.X-fdx*r, p.Y-fdy*r, -fdx, -fdy, exhaust)
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyS) {
+			spawnThrustParticles(g, p.X+fdx*r, p.Y+fdy*r, fdx, fdy, exhaust)
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyA) {
+			spawnThrustParticles(g, p.X+rdx*r, p.Y+rdy*r, rdx, rdy, exhaust)
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyD) {
+			spawnThrustParticles(g, p.X-rdx*r, p.Y-rdy*r, -rdx, -rdy, exhaust)
+		}
+	} else {
+		if ebiten.IsKeyPressed(ebiten.KeyW) {
+			spawnThrustParticles(g, p.X, p.Y+PlayerRadius, 0, 1, exhaust)
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyS) {
+			spawnThrustParticles(g, p.X, p.Y-PlayerRadius, 0, -1, exhaust)
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyA) {
+			spawnThrustParticles(g, p.X+PlayerRadius, p.Y, 1, 0, exhaust)
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyD) {
+			spawnThrustParticles(g, p.X-PlayerRadius, p.Y, -1, 0, exhaust)
+		}
 	}
 }
 

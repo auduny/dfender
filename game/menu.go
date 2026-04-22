@@ -11,9 +11,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-const menuItemCount = 4
+const menuItemCount = 5
 
-var menuLabels = [menuItemCount]string{"NEW GAME", "HIGH SCORES", "CREDITS", "QUIT"}
+var menuLabels = [menuItemCount]string{"NEW GAME", "HIGH SCORES", "CREDITS", "SETTINGS", "QUIT"}
 
 func (g *Game) updateMenu() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) || inpututil.IsKeyJustPressed(ebiten.KeyS) {
@@ -31,7 +31,9 @@ func (g *Game) updateMenu() {
 			g.State = StateHighScores
 		case 2: // Credits
 			g.State = StateCredits
-		case 3: // Quit
+		case 3: // Settings
+			g.State = StateSettings
+		case 4: // Quit
 			os.Exit(0)
 		}
 	}
@@ -116,6 +118,11 @@ func (g *Game) drawMenuScreen(screen *ebiten.Image) {
 
 	if g.State == StateHighScores {
 		g.drawHighScores(screen)
+		return
+	}
+
+	if g.State == StateSettings {
+		g.drawSettings(screen)
 		return
 	}
 

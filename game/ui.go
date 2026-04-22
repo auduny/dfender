@@ -69,7 +69,7 @@ func drawUI(screen *ebiten.Image, g *Game) {
 		if g.UnpauseTimer > 0 {
 			drawTextCentered(screen, "RESUMING", FontMenu, float64(ScreenHeight)/2-40, ColorBorder)
 		} else {
-			drawPauseOverlay(screen)
+			drawPauseOverlay(screen, g)
 		}
 	}
 
@@ -98,7 +98,7 @@ var keymapEntries = []struct{ key, action string }{
 	{"M", "TOGGLE MUSIC"},
 }
 
-func drawPauseOverlay(screen *ebiten.Image) {
+func drawPauseOverlay(screen *ebiten.Image, g *Game) {
 	cy := float64(ScreenHeight)/2 - 160
 	drawTextCentered(screen, "PAUSED", FontTitle, cy, ColorBorder)
 	cy += 100
@@ -106,8 +106,12 @@ func drawPauseOverlay(screen *ebiten.Image) {
 	keyX := float64(ScreenWidth)/2 - 140
 	actX := float64(ScreenWidth)/2 + 20
 	for _, k := range keymapEntries {
+		action := k.action
+		if k.key == "WASD" && g.Settings.CanonRelativeControls {
+			action = "THRUST (CANON-REL)"
+		}
 		drawTextAt(screen, k.key, FontHUD, keyX, cy, ColorBorder)
-		drawTextAt(screen, k.action, FontHUD, actX, cy, ColorUI)
+		drawTextAt(screen, action, FontHUD, actX, cy, ColorUI)
 		cy += 28
 	}
 
